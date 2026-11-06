@@ -79,6 +79,8 @@ export type RecetePdfData = {
 
 export function RecetePdf({ d }: { d: RecetePdfData }) {
   const { recipe } = d;
+  const hasNotes = recipe.items.some((it) => it.note);
+  const W = hasNotes ? { p: "40%", a: "20%", n: "40%" } : { p: "68%", a: "32%", n: "0%" };
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
       <Page size="A5" style={s.page}>
@@ -118,15 +120,17 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
             return (
               <View key={w} style={s.week} wrap={false}>
                 <View style={s.th}>
-                  <Text style={[s.thText, { width: "68%" }]}>{w}. HAFTA</Text>
-                  <Text style={[s.thText, { width: "32%", textAlign: "right" }]}>MİKTAR</Text>
+                  <Text style={[s.thText, { width: W.p }]}>{w}. HAFTA</Text>
+                  <Text style={[s.thText, { width: W.a, textAlign: hasNotes ? "left" : "right" }]}>MİKTAR</Text>
+                  {hasNotes && <Text style={[s.thText, { width: W.n }]}>AÇIKLAMA</Text>}
                 </View>
                 {items.map((it, i) => (
                   <View key={i} style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }]}>
-                    <Text style={[s.td, { width: "68%", fontWeight: 600 }]}>{it.product}</Text>
-                    <Text style={[s.td, { width: "32%", textAlign: "right" }]}>
+                    <Text style={[s.td, { width: W.p, fontWeight: 600 }]}>{it.product}</Text>
+                    <Text style={[s.td, { width: W.a, textAlign: hasNotes ? "left" : "right" }]}>
                       {formatAmount(it.amount)} {it.unit}
                     </Text>
+                    {hasNotes && <Text style={[s.td, { width: W.n, fontSize: 9.5 }]}>{it.note}</Text>}
                   </View>
                 ))}
               </View>

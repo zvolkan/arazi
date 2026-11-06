@@ -87,7 +87,10 @@ export default async function RecipePage({
               <ul className="totals-list">
                 {items.map((it, i) => (
                   <li key={i}>
-                    <span>{it.product}</span>
+                    <span>
+                      {it.product}
+                      {it.note && <span className="rx-item-note">{it.note}</span>}
+                    </span>
                     <b>{formatAmount(it.amount)} {it.unit}</b>
                   </li>
                 ))}
@@ -99,7 +102,7 @@ export default async function RecipePage({
 
       {recipe.note && (
         <div className="panel">
-          <h2>Açıklama</h2>
+          <h2>Genel açıklama</h2>
           <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{recipe.note}</p>
         </div>
       )}

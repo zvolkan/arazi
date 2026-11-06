@@ -12,7 +12,7 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - Ürün filtresi ve arama
 - Detayda geçmiş tarihli ziyaret + not ekleme, ziyaret silme, düzenleme
 - Telefona dokununca arama açılır
-- **Reçete:** Sulama / Yapraktan seçimi, 1.–2.–3. hafta için ürün + miktar + birim.
+- **Reçete:** Sulama / Yapraktan seçimi, 1.–2.–3. hafta için ürün + miktar + birim + açıklama.
   Ekranda ürün bazında **toplam ihtiyaç** (örn. Cloud 7 Litre) gösterilir, PDF'te görünmez.
 - Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde

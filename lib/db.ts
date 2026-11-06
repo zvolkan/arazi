@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS recipe_items (
   unit      TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS recipe_items_recipe_idx ON recipe_items (recipe_id);
+ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT '';
 `;
 
 /** Tablolar yoksa ilk istekte kendiliğinden oluşturulur. */
@@ -188,7 +189,7 @@ export async function getRecipe(id: number): Promise<Recipe | null> {
   );
   if (!rows[0]) return null;
   const items = await sql<RecipeItem>(
-    `SELECT week, product, amount, unit FROM recipe_items
+    `SELECT week, product, amount, unit, note FROM recipe_items
       WHERE recipe_id = $1 ORDER BY week, position, id`,
     [id]
   );

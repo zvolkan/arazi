@@ -17,6 +17,7 @@ export type RecipeItem = {
   product: string;
   amount: number;
   unit: Unit;
+  note: string;
 };
 
 export type Recipe = {

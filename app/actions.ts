@@ -148,6 +148,7 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
       product: String(it.product ?? "").trim().replace(/\s+/g, " "),
       amount: Number(it.amount),
       unit: it.unit,
+      note: String(it.note ?? "").trim(),
     }))
     .filter((it) => it.product);
   for (const it of items) {
@@ -201,12 +202,12 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
 
   const values: unknown[] = [];
   const tuples = r.items.map((it, i) => {
-    values.push(id, it.week, i, it.product, it.amount, it.unit);
-    const b = i * 6;
-    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6})`;
+    values.push(id, it.week, i, it.product, it.amount, it.unit, it.note);
+    const b = i * 7;
+    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7})`;
   });
   await sql(
-    `INSERT INTO recipe_items (recipe_id, week, position, product, amount, unit) VALUES ${tuples.join(", ")}`,
+    `INSERT INTO recipe_items (recipe_id, week, position, product, amount, unit, note) VALUES ${tuples.join(", ")}`,
     values
   );
   revalidatePath(`/tarla/${r.field_id}`);

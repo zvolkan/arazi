@@ -311,6 +311,8 @@ a.phone:hover { text-decoration: underline; }
   gap: 6px;
   margin-bottom: 8px;
 }
+.rx-note { grid-column: 1 / -1; font-size: 16px; color: var(--text); background: #fafaf7; }
+.rx-item-note { display: block; color: var(--muted); font-size: 14px; }
 .rx-del {
   border: 1px solid var(--line);
   background: var(--surface);

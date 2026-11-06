@@ -14,10 +14,10 @@ import {
   type Unit,
 } from "@/lib/recipe";
 
-type Row = { key: number; product: string; amount: string; unit: Unit };
+type Row = { key: number; product: string; amount: string; unit: Unit; note: string };
 
 let nextKey = 1;
-const emptyRow = (unit: Unit = "L"): Row => ({ key: nextKey++, product: "", amount: "", unit });
+const emptyRow = (unit: Unit = "L"): Row => ({ key: nextKey++, product: "", amount: "", unit, note: "" });
 
 export function RecipeForm({
   fieldId,
@@ -38,7 +38,7 @@ export function RecipeForm({
     WEEKS.map((w) => {
       const rows = (initial?.items ?? [])
         .filter((it) => it.week === w)
-        .map((it) => ({ key: nextKey++, product: it.product, amount: formatAmount(it.amount), unit: it.unit }));
+        .map((it) => ({ key: nextKey++, product: it.product, amount: formatAmount(it.amount), unit: it.unit, note: it.note ?? "" }));
       return rows.length ? rows : [emptyRow()];
     })
   );
@@ -65,7 +65,7 @@ export function RecipeForm({
       weeks.flatMap((rows, i) =>
         rows
           .filter((r) => r.product.trim())
-          .map((r) => ({ week: i + 1, product: r.product, amount: parseAmount(r.amount), unit: r.unit }))
+          .map((r) => ({ week: i + 1, product: r.product, amount: parseAmount(r.amount), unit: r.unit, note: r.note }))
       ),
     [weeks]
   );
@@ -152,6 +152,13 @@ export function RecipeForm({
               <button type="button" className="rx-del" onClick={() => removeRow(w, r.key)} aria-label="Satırı sil">
                 ×
               </button>
+              <input
+                className="rx-note"
+                placeholder="Açıklama (isteğe bağlı)"
+                value={r.note}
+                onChange={(e) => setRow(w, r.key, { note: e.target.value })}
+                autoComplete="off"
+              />
             </div>
           ))}
           <button type="button" className="btn btn-sm" onClick={() => addRow(w)}>+ Ürün ekle</button>
@@ -160,7 +167,7 @@ export function RecipeForm({
 
       <div className="panel">
         <label className="field" style={{ marginBottom: 0 }}>
-          <span>Açıklama (isteğe bağlı, PDF'te görünür)</span>
+          <span>Genel açıklama (isteğe bağlı, PDF'te görünür)</span>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
         </label>
       </div>
