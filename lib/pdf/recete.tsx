@@ -144,10 +144,6 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
             </View>
           ) : null}
 
-          <View style={{ marginTop: 22, alignSelf: "flex-end", width: 150, alignItems: "center" }} wrap={false}>
-            <View style={{ borderTopWidth: 1, borderColor: C.text, width: "100%", marginBottom: 4 }} />
-            <Text style={{ fontSize: 8.5, color: C.muted }}>{PDF_BRAND.engineer}</Text>
-          </View>
         </View>
 
         <Text style={s.footer} fixed>{PDF_BRAND.footer}</Text>
