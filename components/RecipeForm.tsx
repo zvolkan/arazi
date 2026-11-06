@@ -174,7 +174,7 @@ export function RecipeForm({
 
       <div className="panel totals">
         <h2>Toplam ihtiyaç</h2>
-        <p className="totals-hint">Sadece burada görünür, çiftçiye giden PDF'te yer almaz.</p>
+        <p className="totals-hint">PDF'in en altında da yer alır.</p>
         {totals.length === 0 ? (
           <p style={{ color: "var(--muted)", margin: 0 }}>Ürün girdikçe burada toplanır.</p>
         ) : (

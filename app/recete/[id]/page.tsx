@@ -65,7 +65,7 @@ export default async function RecipePage({
 
       <div className="panel totals">
         <h2>Toplam ihtiyaç</h2>
-        <p className="totals-hint">PDF'te görünmez.</p>
+        <p className="totals-hint">PDF'in en altında da yer alır.</p>
         <ul className="totals-list">
           {totals.map((t) => (
             <li key={`${t.product}|${t.unit}`}>

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { WEEKS, formatAmount, type Recipe } from "@/lib/recipe";
+import { WEEKS, computeTotals, formatAmount, type Recipe } from "@/lib/recipe";
 
 // Türkçe karakterler için gömülü yazı tipi
 const fontDir = path.join(process.cwd(), "fonts");
@@ -31,20 +31,20 @@ const C = {
 };
 
 const s = StyleSheet.create({
-  page: { fontFamily: "Inter", fontSize: 9.5, color: C.text, paddingBottom: 40 },
+  page: { fontFamily: "Inter", fontSize: 9.5, color: C.text, paddingBottom: 32 },
   band: {
     backgroundColor: C.green,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   engineer: { color: "#fff", fontSize: 13, fontWeight: 700, textAlign: "right" },
   sub: { color: "#dfeadc", fontSize: 8, textAlign: "right", marginTop: 3 },
-  body: { paddingHorizontal: 28, paddingTop: 14 },
-  info: { flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: C.line, borderRadius: 4, marginBottom: 12 },
-  cell: { width: "50%", paddingVertical: 6, paddingHorizontal: 8 },
+  body: { paddingHorizontal: 24, paddingTop: 10 },
+  info: { flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: C.line, borderRadius: 4, marginBottom: 8 },
+  cell: { width: "50%", paddingVertical: 4, paddingHorizontal: 8 },
   label: { fontSize: 7, color: C.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 },
   value: { fontSize: 10, fontWeight: 600 },
   method: {
@@ -57,14 +57,14 @@ const s = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 3,
-    marginBottom: 10,
+    marginBottom: 7,
   },
-  week: { marginBottom: 10 },
+  week: { marginBottom: 7 },
   th: { flexDirection: "row", backgroundColor: C.green, borderTopLeftRadius: 3, borderTopRightRadius: 3 },
-  thText: { color: "#fff", fontWeight: 700, fontSize: 8.5, paddingVertical: 5, paddingHorizontal: 8 },
+  thText: { color: "#fff", fontWeight: 700, fontSize: 8.5, paddingVertical: 4, paddingHorizontal: 8 },
   tr: { flexDirection: "row", borderBottomWidth: 1, borderColor: C.line },
-  td: { paddingVertical: 5, paddingHorizontal: 8, fontSize: 10 },
-  footer: { position: "absolute", bottom: 14, left: 24, right: 24, textAlign: "center", fontSize: 7, color: C.muted },
+  td: { paddingVertical: 3.5, paddingHorizontal: 8, fontSize: 10 },
+  footer: { position: "absolute", bottom: 12, left: 24, right: 24, textAlign: "center", fontSize: 7, color: C.muted },
 });
 
 export type RecetePdfData = {
@@ -80,12 +80,13 @@ export type RecetePdfData = {
 export function RecetePdf({ d }: { d: RecetePdfData }) {
   const { recipe } = d;
   const hasNotes = recipe.items.some((it) => it.note);
+  const totals = computeTotals(recipe.items);
   const W = hasNotes ? { p: "40%", a: "20%", n: "40%" } : { p: "68%", a: "32%", n: "0%" };
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
       <Page size="A5" style={s.page}>
         <View style={s.band}>
-          <Image src={LOGO} style={{ height: 40, objectFit: "contain" }} />
+          <Image src={LOGO} style={{ height: 34, objectFit: "contain" }} />
           <View>
             <Text style={s.engineer}>{PDF_BRAND.engineer}</Text>
             <Text style={s.sub}>No: {d.no}  ·  {d.date}</Text>
@@ -138,11 +139,41 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
           })}
 
           {recipe.note ? (
-            <View style={{ marginTop: 4, padding: 9, backgroundColor: C.greenSoft, borderRadius: 4 }} wrap={false}>
+            <View style={{ marginTop: 2, paddingVertical: 6, paddingHorizontal: 9, backgroundColor: C.greenSoft, borderRadius: 4 }} wrap={false}>
               <Text style={[s.label, { color: C.green }]}>Açıklama</Text>
               <Text style={{ fontSize: 9.5, lineHeight: 1.4 }}>{recipe.note}</Text>
             </View>
           ) : null}
+
+          {totals.length > 0 && (
+            <View style={{ marginTop: 8, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }} wrap={false}>
+              <View style={{ backgroundColor: C.green, paddingVertical: 4, paddingHorizontal: 8 }}>
+                <Text style={{ color: "#fff", fontWeight: 700, fontSize: 8.5 }}>TOPLAM ÜRÜN MİKTARLARI (3 HAFTA)</Text>
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                {totals.map((t, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      width: "50%",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      paddingVertical: 4,
+                      paddingHorizontal: 8,
+                      borderColor: C.line,
+                      borderTopWidth: i >= 2 ? 1 : 0,
+                      borderLeftWidth: i % 2 ? 1 : 0,
+                    }}
+                  >
+                    <Text style={{ fontSize: 9.5, fontWeight: 600, maxWidth: "65%" }}>{t.product}</Text>
+                    <Text style={{ fontSize: 9.5, fontWeight: 700 }}>
+                      {formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
         </View>
 
