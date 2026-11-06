@@ -36,7 +36,7 @@ export default async function FieldPage({
       <div className="panel">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
           <h1 className="page-title" style={{ margin: 0 }}>{field.full_name}</h1>
-          <StatusBadge f={field} />
+          <StatusBadge f={field} today={todayISO()} />
         </div>
 
         <div className="info-grid" style={{ marginTop: 14 }}>

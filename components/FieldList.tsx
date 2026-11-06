@@ -3,13 +3,26 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import type { FieldRow } from "@/lib/db";
-import { formatDate, formatPhone, telHref, trLower } from "@/lib/format";
+import {
+  REVISIT_DAYS,
+  fieldStatus,
+  formatDate,
+  formatPhone,
+  telHref,
+  trLower,
+  type Status,
+} from "@/lib/format";
 import { markVisitedToday } from "@/app/actions";
 
-type Tab = "hepsi" | "gidilmeyen" | "gidilen";
+type Row = FieldRow & { status: Status; days: number | null };
 
-export function FieldList({ fields }: { fields: FieldRow[] }) {
-  const [tab, setTab] = useState<Tab>("hepsi");
+const SECTIONS: { status: Status; title: string; alert: boolean }[] = [
+  { status: "gidilmedi", title: "Hiç gidilmeyenler", alert: true },
+  { status: "tekrar", title: "3 haftayı geçenler", alert: true },
+  { status: "gidildi", title: "Gidilen ve süresi gelmeyenler", alert: false },
+];
+
+export function FieldList({ fields, today }: { fields: FieldRow[]; today: string }) {
   const [crop, setCrop] = useState("");
   const [q, setQ] = useState("");
 
@@ -21,24 +34,26 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
     [fields]
   );
 
-  const counts = useMemo(() => {
-    const visited = fields.filter((f) => f.visit_count > 0).length;
-    return { all: fields.length, visited, notVisited: fields.length - visited };
-  }, [fields]);
-
-  const rows = useMemo(() => {
+  const groups = useMemo(() => {
     const needle = trLower(q.trim());
     const needleDigits = q.replace(/\D/g, "");
-    return fields
-      .filter((f) => (tab === "gidilen" ? f.visit_count > 0 : tab === "gidilmeyen" ? f.visit_count === 0 : true))
-      .filter((f) => !crop || f.crop === crop)
-      .filter((f) => {
-        if (!needle) return true;
-        if (trLower(`${f.full_name} ${f.address} ${f.crop}`).includes(needle)) return true;
-        return needleDigits.length >= 3 && f.phone.replace(/\D/g, "").includes(needleDigits);
-      })
-      .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
-  }, [fields, tab, crop, q]);
+    const g: Record<Status, Row[]> = { gidilmedi: [], tekrar: [], gidildi: [] };
+    for (const f of fields) {
+      if (crop && f.crop !== crop) continue;
+      if (needle) {
+        const textHit = trLower(`${f.full_name} ${f.address} ${f.crop}`).includes(needle);
+        const phoneHit = needleDigits.length >= 3 && f.phone.replace(/\D/g, "").includes(needleDigits);
+        if (!textHit && !phoneHit) continue;
+      }
+      const row = { ...f, ...fieldStatus(f, today) };
+      g[row.status].push(row);
+    }
+    const byName = (a: Row, b: Row) => a.full_name.localeCompare(b.full_name, "tr");
+    g.gidilmedi.sort(byName);
+    g.tekrar.sort((a, b) => (b.days ?? 0) - (a.days ?? 0)); // en uzun süredir gidilmeyen üstte
+    g.gidildi.sort(byName);
+    return g;
+  }, [fields, today, crop, q]);
 
   if (fields.length === 0) {
     return (
@@ -52,14 +67,10 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
     );
   }
 
+  const total = groups.gidilmedi.length + groups.tekrar.length + groups.gidildi.length;
+
   return (
     <>
-      <div className="stats">
-        <StatButton label="Toplam tarla" value={counts.all} active={tab === "hepsi"} onClick={() => setTab("hepsi")} />
-        <StatButton label="Gidilmeyen" value={counts.notVisited} active={tab === "gidilmeyen"} onClick={() => setTab("gidilmeyen")} />
-        <StatButton label="Gidilen" value={counts.visited} active={tab === "gidilen"} onClick={() => setTab("gidilen")} />
-      </div>
-
       <div className="toolbar">
         <input
           className="search"
@@ -77,8 +88,38 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
         <a href="/api/disa-aktar" className="btn hide-mobile">⬇ Excel'e Aktar</a>
       </div>
 
+      {total === 0 ? (
+        <div className="empty">Aramaya uyan kayıt yok.</div>
+      ) : (
+        SECTIONS.map((s) => (
+          <Section key={s.status} title={s.title} alert={s.alert} rows={groups[s.status]} today={today} />
+        ))
+      )}
+    </>
+  );
+}
+
+function Section({
+  title,
+  alert,
+  rows,
+  today,
+}: {
+  title: string;
+  alert: boolean;
+  rows: Row[];
+  today: string;
+}) {
+  const hot = alert && rows.length > 0;
+  return (
+    <section className="section">
+      <h2 className={`section-title${hot ? " section-title-alert" : ""}`}>
+        {title}
+        <span className="section-count">{rows.length}</span>
+      </h2>
+
       {rows.length === 0 ? (
-        <div className="empty">Bu filtreye uyan kayıt yok.</div>
+        <div className="section-empty">Bu bölümde kayıt yok.</div>
       ) : (
         <>
           {/* Bilgisayar: tablo */}
@@ -98,16 +139,16 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
               </thead>
               <tbody>
                 {rows.map((f) => (
-                  <tr key={f.id}>
+                  <tr key={f.id} className={alert ? "row-alert" : undefined}>
                     <td><Link className="name" href={`/tarla/${f.id}`}>{f.full_name}</Link></td>
                     <td>{f.phone ? <a className="phone" href={telHref(f.phone)}>{formatPhone(f.phone)}</a> : "—"}</td>
                     <td className="addr">{f.address || "—"}</td>
                     <td>{f.crop ? <span className="crop">{f.crop}</span> : "—"}</td>
-                    <td><StatusBadge f={f} /></td>
+                    <td><StatusBadge f={f} today={today} /></td>
                     <td>{f.last_visit ? formatDate(f.last_visit) : "—"}</td>
                     <td>{f.visit_count}</td>
                     <td style={{ textAlign: "right" }}>
-                      <VisitTodayButton f={f} small />
+                      <VisitTodayButton id={f.id} status={f.status} />
                     </td>
                   </tr>
                 ))}
@@ -118,10 +159,10 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
           {/* Telefon: kartlar */}
           <div className="cards">
             {rows.map((f) => (
-              <div className="card" key={f.id}>
+              <div className={`card${alert ? " card-alert" : ""}`} key={f.id}>
                 <div className="card-head">
                   <Link href={`/tarla/${f.id}`}>{f.full_name}</Link>
-                  <StatusBadge f={f} />
+                  <StatusBadge f={f} today={today} />
                 </div>
                 <div className="meta">
                   {f.crop && <span className="crop" style={{ marginRight: 6 }}>{f.crop}</span>}
@@ -131,7 +172,7 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
                   {f.phone && (
                     <a className="btn btn-sm" href={telHref(f.phone)}>📞 Ara</a>
                   )}
-                  <VisitTodayButton f={f} small />
+                  <VisitTodayButton id={f.id} status={f.status} />
                   <Link className="btn btn-sm" href={`/tarla/${f.id}`}>Detay</Link>
                 </div>
               </div>
@@ -139,34 +180,34 @@ export function FieldList({ fields }: { fields: FieldRow[] }) {
           </div>
         </>
       )}
-    </>
+    </section>
   );
 }
 
-function StatButton(props: { label: string; value: number; active: boolean; onClick: () => void }) {
-  return (
-    <button type="button" className={`stat${props.active ? " active" : ""}`} onClick={props.onClick}>
-      <b>{props.value}</b>
-      <span>{props.label}</span>
-    </button>
-  );
+export function StatusBadge({
+  f,
+  today,
+}: {
+  f: Pick<FieldRow, "visit_count" | "first_visit" | "last_visit">;
+  today: string;
+}) {
+  const { status, days } = fieldStatus(f, today);
+  if (status === "gidilmedi") return <span className="badge badge-alert">Gidilmedi</span>;
+  if (status === "tekrar")
+    return <span className="badge badge-alert">{days} gün oldu</span>;
+  return <span className="badge badge-yes">Gidildi · {formatDate(f.last_visit)}</span>;
 }
 
-export function StatusBadge({ f }: { f: Pick<FieldRow, "visit_count" | "first_visit"> }) {
-  if (f.visit_count === 0) return <span className="badge badge-no">Gidilmedi</span>;
-  return <span className="badge badge-yes">Gidildi · {formatDate(f.first_visit)}</span>;
-}
-
-function VisitTodayButton({ f, small }: { f: FieldRow; small?: boolean }) {
+function VisitTodayButton({ id, status }: { id: number; status: Status }) {
   const [pending, start] = useTransition();
-  const cls = `btn ${small ? "btn-sm" : ""}`;
-  if (f.visit_count > 0) return null;
+  if (status === "gidildi") return null;
   return (
     <button
       type="button"
-      className={`${cls} btn-primary`}
+      className="btn btn-sm btn-primary"
       disabled={pending}
-      onClick={() => start(() => markVisitedToday(f.id))}
+      onClick={() => start(() => markVisitedToday(id))}
+      title={`Bugünün tarihiyle ziyaret kaydeder. ${REVISIT_DAYS} gün sonra tekrar listenin üstüne çıkar.`}
     >
       {pending ? "Kaydediliyor…" : "✓ Bugün gidildi"}
     </button>

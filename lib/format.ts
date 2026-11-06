@@ -73,3 +73,28 @@ export const DEFAULT_CROPS = [
   "Narenciye",
   "Zeytin",
 ];
+
+/** Son ziyaretten bu kadar gün geçince "Tekrar gidilmeli" olur. */
+export const REVISIT_DAYS = 21;
+
+export type Status = "gidilmedi" | "tekrar" | "gidildi";
+
+/** İki "YYYY-MM-DD" tarih arasındaki gün farkı. */
+export function daysBetween(fromISO: string, toISO: string): number {
+  return Math.round((Date.parse(toISO) - Date.parse(fromISO)) / 86_400_000);
+}
+
+export function fieldStatus(
+  f: { visit_count: number; last_visit: string | null },
+  today: string
+): { status: Status; days: number | null } {
+  if (f.visit_count === 0 || !f.last_visit) return { status: "gidilmedi", days: null };
+  const days = daysBetween(f.last_visit, today);
+  return { status: days >= REVISIT_DAYS ? "tekrar" : "gidildi", days };
+}
+
+export const STATUS_LABEL: Record<Status, string> = {
+  gidilmedi: "Gidilmedi",
+  tekrar: "3 haftayı geçti",
+  gidildi: "Gidildi",
+};

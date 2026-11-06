@@ -7,8 +7,9 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 
 - Çiftçi (ad soyad, telefon) → Tarla (adres, ürün) → Ziyaret (tarih, not)
 - Aynı telefonla yeni tarla girilirse mevcut çiftçiye eklenir
-- Özet: Toplam / Gidilmeyen / Gidilen (tıklayınca filtreler), ürün filtresi, arama
-- Gidilmeyen tarlada tek dokunuşla **"Bugün gidildi"**
+- Liste üç bölüm: **Hiç gidilmeyenler** (kırmızı) → **3 haftayı geçenler** (kırmızı, en eskisi üstte) → **Gidilen ve süresi gelmeyenler**
+- Kırmızı bölümlerde tek dokunuşla **"Bugün gidildi"**; tarla 3 hafta boyunca alt bölüme iner
+- Ürün filtresi ve arama
 - Detayda geçmiş tarihli ziyaret + not ekleme, ziyaret silme, düzenleme
 - Telefona dokununca arama açılır
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
@@ -48,6 +49,10 @@ components/                Liste, formlar, butonlar
 lib/db.ts                  Veritabanı bağlantısı, şema, sorgular
 lib/format.ts              Tarih, telefon, metin yardımcıları
 ```
+
+## Ayarlar
+
+- Hatırlatma süresi: `lib/format.ts` → `REVISIT_DAYS` (varsayılan 21 gün)
 
 ## Ürün listesi
 

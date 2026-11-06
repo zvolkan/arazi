@@ -1,11 +1,15 @@
 import ExcelJS from "exceljs";
 import { listFields } from "@/lib/db";
-import { formatDate, formatPhone, todayISO } from "@/lib/format";
+import { STATUS_LABEL, fieldStatus, formatDate, formatPhone, todayISO } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const fields = (await listFields()).sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
+  const today = todayISO();
+  const order = { gidilmedi: 0, tekrar: 1, gidildi: 2 } as const;
+  const fields = (await listFields())
+    .map((f) => ({ ...f, ...fieldStatus(f, today) }))
+    .sort((a, b) => order[a.status] - order[b.status] || a.full_name.localeCompare(b.full_name, "tr"));
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Tarlalar", { views: [{ state: "frozen", ySplit: 1 }] });
@@ -14,7 +18,7 @@ export async function GET() {
     { header: "Telefon", key: "phone", width: 16 },
     { header: "Tarla Adresi", key: "address", width: 40 },
     { header: "Ürün", key: "crop", width: 14 },
-    { header: "Durum", key: "status", width: 12 },
+    { header: "Durum", key: "status", width: 18 },
     { header: "İlk Ziyaret", key: "first", width: 13 },
     { header: "Son Ziyaret", key: "last", width: 13 },
     { header: "Ziyaret Sayısı", key: "count", width: 14 },
@@ -26,7 +30,7 @@ export async function GET() {
       phone: f.phone ? formatPhone(f.phone) : "",
       address: f.address,
       crop: f.crop,
-      status: f.visit_count > 0 ? "Gidildi" : "Gidilmedi",
+      status: STATUS_LABEL[f.status],
       first: formatDate(f.first_visit),
       last: formatDate(f.last_visit),
       count: f.visit_count,
@@ -44,7 +48,7 @@ export async function GET() {
   return new Response(buf as ArrayBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="arazi-takip-${todayISO()}.xlsx"`,
+      "Content-Disposition": `attachment; filename="arazi-takip-${today}.xlsx"`,
       "Cache-Control": "no-store",
     },
   });
