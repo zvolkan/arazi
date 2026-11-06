@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { WEEKS, computeTotals, formatAmount, type Recipe } from "@/lib/recipe";
+import { AMOUNT_BASIS, WEEKS, computeTotals, formatAmount, totalsBasis, type Recipe } from "@/lib/recipe";
 
 // Türkçe karakterler için gömülü yazı tipi
 const fontDir = path.join(process.cwd(), "fonts");
@@ -80,8 +80,10 @@ export type RecetePdfData = {
 export function RecetePdf({ d }: { d: RecetePdfData }) {
   const { recipe } = d;
   const hasNotes = recipe.items.some((it) => it.note);
-  const totals = computeTotals(recipe.items);
-  const W = hasNotes ? { p: "40%", a: "20%", n: "40%" } : { p: "68%", a: "32%", n: "0%" };
+  const basis = totalsBasis(recipe.method, recipe.area_donum, recipe.water_per_donum);
+  const totals = computeTotals(recipe.items, basis.factor);
+  const per = AMOUNT_BASIS[recipe.method].toLocaleUpperCase("tr-TR");
+  const W = hasNotes ? { p: "38%", a: "27%", n: "35%" } : { p: "62%", a: "38%", n: "0%" };
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
       <Page size="A5" style={s.page}>
@@ -109,11 +111,15 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
             </View>
             <View style={s.cell}>
               <Text style={s.label}>Ürün</Text>
-              <Text style={s.value}>{d.crop || "—"}</Text>
+              <Text style={s.value}>
+                {d.crop || "—"}
+                {recipe.area_donum ? `  ·  ${formatAmount(recipe.area_donum)} dönüm` : ""}
+              </Text>
             </View>
           </View>
 
-          <Text style={s.method}>{recipe.method === "sulama" ? "SULAMA İLE UYGULAMA" : "YAPRAKTAN UYGULAMA"}</Text>
+          <Text style={s.method}>{recipe.method === "sulama" ? "SULAMA İLE UYGULAMA" : "YAPRAKTAN UYGULAMA"}
+            {recipe.method === "yapraktan" && recipe.water_per_donum ? `  ·  DÖNÜME ${formatAmount(recipe.water_per_donum)} L SU` : ""}</Text>
 
           {WEEKS.map((w) => {
             const items = recipe.items.filter((it) => it.week === w);
@@ -122,7 +128,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
               <View key={w} style={s.week} wrap={false}>
                 <View style={s.th}>
                   <Text style={[s.thText, { width: W.p }]}>{w}. HAFTA</Text>
-                  <Text style={[s.thText, { width: W.a, textAlign: hasNotes ? "left" : "right" }]}>MİKTAR</Text>
+                  <Text style={[s.thText, { width: W.a, textAlign: hasNotes ? "left" : "right" }]}>{per}</Text>
                   {hasNotes && <Text style={[s.thText, { width: W.n }]}>AÇIKLAMA</Text>}
                 </View>
                 {items.map((it, i) => (
@@ -148,7 +154,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
           {totals.length > 0 && (
             <View style={{ marginTop: 8, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }} wrap={false}>
               <View style={{ backgroundColor: C.green, paddingVertical: 4, paddingHorizontal: 8 }}>
-                <Text style={{ color: "#fff", fontWeight: 700, fontSize: 8.5 }}>TOPLAM ÜRÜN MİKTARLARI (3 HAFTA)</Text>
+                <Text style={{ color: "#fff", fontWeight: 700, fontSize: 8.5 }}>TOPLAM ÜRÜN MİKTARLARI  ·  3 HAFTA  ·  {basis.label.toLocaleUpperCase("tr-TR")}</Text>
               </View>
               <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                 {totals.map((t, i) => (

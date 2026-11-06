@@ -54,6 +54,10 @@ export default async function FieldPage({
             <span>Ne tarlası</span>
             {field.crop ? <span className="crop">{field.crop}</span> : "—"}
           </div>
+          <div>
+            <span>Dönüm</span>
+            {field.area_donum ? field.area_donum.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
+          </div>
         </div>
 
         {field.phone && (

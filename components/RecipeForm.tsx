@@ -6,7 +6,9 @@ import {
   METHOD_LABEL,
   UNITS,
   WEEKS,
+  AMOUNT_BASIS,
   computeTotals,
+  totalsBasis,
   formatAmount,
   parseAmount,
   type Method,
@@ -21,11 +23,13 @@ const emptyRow = (unit: Unit = "L"): Row => ({ key: nextKey++, product: "", amou
 
 export function RecipeForm({
   fieldId,
+  fieldArea,
   today,
   products,
   initial,
 }: {
   fieldId: number;
+  fieldArea: number | null;
   today: string;
   products: string[];
   initial?: Recipe;
@@ -33,6 +37,9 @@ export function RecipeForm({
   const [state, formAction, pending] = useActionState(saveRecipe, {});
   const [method, setMethod] = useState<Method | null>(initial?.method ?? null);
   const [date, setDate] = useState(initial?.recipe_date ?? today);
+  const numStr = (n: number | null | undefined) => (n != null ? formatAmount(n) : "");
+  const [area, setArea] = useState(numStr(initial ? initial.area_donum : fieldArea));
+  const [water, setWater] = useState(numStr(initial?.water_per_donum));
   const [note, setNote] = useState(initial?.note ?? "");
   const [weeks, setWeeks] = useState<Row[][]>(() =>
     WEEKS.map((w) => {
@@ -69,12 +76,15 @@ export function RecipeForm({
       ),
     [weeks]
   );
-  const totals = useMemo(() => computeTotals(items), [items]);
+  const basis = totalsBasis(method ?? "sulama", parseAmount(area) || null, parseAmount(water) || null);
+  const totals = useMemo(() => computeTotals(items, basis.factor), [items, basis.factor]);
 
   const payload = JSON.stringify({
     id: initial?.id,
     field_id: fieldId,
     recipe_date: date,
+    area_donum: parseAmount(area) || null,
+    water_per_donum: parseAmount(water) || null,
     method,
     note,
     items,
@@ -100,10 +110,37 @@ export function RecipeForm({
             </button>
           ))}
         </div>
-        <label className="field" style={{ marginTop: 14, marginBottom: 0 }}>
-          <span>Reçete tarihi</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-        </label>
+        <div className="row2" style={{ marginTop: 14 }}>
+          <label className="field" style={{ marginBottom: 0 }}>
+            <span>Reçete tarihi</span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          </label>
+          <label className="field" style={{ marginBottom: 0 }}>
+            <span>Dönüm</span>
+            <input
+              inputMode="decimal"
+              value={area}
+              onChange={(e) => setArea(e.target.value.replace(/[^\d.,]/g, ""))}
+              placeholder="örn. 4"
+            />
+          </label>
+        </div>
+        {method === "yapraktan" && (
+          <label className="field" style={{ marginTop: 14, marginBottom: 0 }}>
+            <span>Dönüme kaç litre su?</span>
+            <input
+              inputMode="decimal"
+              value={water}
+              onChange={(e) => setWater(e.target.value.replace(/[^\d.,]/g, ""))}
+              placeholder="örn. 50"
+            />
+          </label>
+        )}
+        {method && (
+          <p className="basis-hint">
+            Miktarları <b>{AMOUNT_BASIS[method]}</b> göre girin.
+          </p>
+        )}
       </div>
 
       <datalist id="urun-listesi">
@@ -135,7 +172,7 @@ export function RecipeForm({
               <input
                 className="rx-amount"
                 inputMode="decimal"
-                placeholder="Miktar"
+                placeholder={method === "yapraktan" ? "Miktar/100 L" : "Miktar/dönüm"}
                 value={r.amount}
                 onChange={(e) => setRow(w, r.key, { amount: e.target.value.replace(/[^\d.,]/g, "") })}
               />
@@ -173,8 +210,9 @@ export function RecipeForm({
       </div>
 
       <div className="panel totals">
-        <h2>Toplam ihtiyaç</h2>
+        <h2>Toplam ihtiyaç{method ? ` · ${basis.label}` : ""}</h2>
         <p className="totals-hint">PDF'in en altında da yer alır.</p>
+        {method && basis.warning && <p className="alert alert-error" style={{ margin: "0 0 10px" }}>{basis.warning}</p>}
         {totals.length === 0 ? (
           <p style={{ color: "var(--muted)", margin: 0 }}>Ürün girdikçe burada toplanır.</p>
         ) : (

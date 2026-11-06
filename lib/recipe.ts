@@ -26,6 +26,10 @@ export type Recipe = {
   recipe_date: string;
   method: Method;
   note: string;
+  /** Reçete yazıldığı andaki dönüm (miktarlar dönüme göre girilir) */
+  area_donum: number | null;
+  /** Yapraktan: dönüme verilecek su (L) */
+  water_per_donum: number | null;
   items: RecipeItem[];
 };
 
@@ -50,16 +54,20 @@ export type Total = { product: string; amount: number; unit: "L" | "kg" };
 
 /**
  * Ürün bazında toplam ihtiyaç. ml → L, g → kg çevrilir.
- * "cloud" ve "Cloud " aynı ürün sayılır.
+ * "cloud" ve "Cloud " aynı ürün sayılır. Miktarlar dönüm başına girildiği için dönümle çarpılır.
  */
-export function computeTotals(items: Pick<RecipeItem, "product" | "amount" | "unit">[]): Total[] {
+export function computeTotals(
+  items: Pick<RecipeItem, "product" | "amount" | "unit">[],
+  area: number | null = 1
+): Total[] {
+  const k = area && area > 0 ? area : 1;
   const map = new Map<string, Total>();
   for (const it of items) {
     const name = it.product.trim().replace(/\s+/g, " ");
     if (!name || !(it.amount > 0)) continue;
     const isVolume = it.unit === "L" || it.unit === "ml";
     const unit: Total["unit"] = isVolume ? "L" : "kg";
-    const amount = it.unit === "ml" || it.unit === "g" ? it.amount / 1000 : it.amount;
+    const amount = (it.unit === "ml" || it.unit === "g" ? it.amount / 1000 : it.amount) * k;
     const key = `${name.toLocaleLowerCase("tr-TR")}|${unit}`;
     const cur = map.get(key);
     if (cur) cur.amount += amount;
@@ -77,3 +85,35 @@ export const DEFAULT_PRODUCTS = [
   "Cloud",
   "Fulactiv",
 ];
+
+/** Miktarın neye göre girildiği: sulamada dönüme, yapraktanda 100 L suya */
+export const AMOUNT_BASIS: Record<Method, string> = {
+  sulama: "dönüme",
+  yapraktan: "100 L suya",
+};
+
+export type Basis = {
+  /** Dönüm/100 L başına miktarlar bununla çarpılınca toplam çıkar */
+  factor: number;
+  /** "4 dönüm" · "4 dönüm · 200 L su" */
+  label: string;
+  /** Eksik bilgi varsa uyarı */
+  warning?: string;
+};
+
+export function totalsBasis(method: Method, area: number | null, water: number | null): Basis {
+  const a = area && area > 0 ? area : null;
+  const w = water && water > 0 ? water : null;
+  if (method === "sulama") {
+    if (!a) return { factor: 1, label: "1 dönüm", warning: "Dönüm girilmediği için toplam 1 dönüme göre." };
+    return { factor: a, label: `${formatAmount(a)} dönüm` };
+  }
+  // yapraktan
+  if (!w) return { factor: 1, label: "100 L su", warning: "Dönüme su miktarı girilmediği için toplam 100 L suya göre." };
+  const totalWater = w * (a ?? 1);
+  return {
+    factor: totalWater / 100,
+    label: `${formatAmount(a ?? 1)} dönüm · ${formatAmount(totalWater)} L su`,
+    warning: a ? undefined : "Dönüm girilmediği için toplam 1 dönüme göre.",
+  };
+}

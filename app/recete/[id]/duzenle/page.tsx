@@ -17,7 +17,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
       <Link href={`/recete/${recipe.id}`} className="back">← Geri</Link>
       <h1 className="page-title">Reçete No {recipeNo(recipe.id)} — Düzenle</h1>
       {field && <p className="subtle">{field.full_name}{field.crop ? ` · ${field.crop}` : ""}</p>}
-      <RecipeForm fieldId={recipe.field_id} today={todayISO()} products={await productOptions()} initial={recipe} />
+      <RecipeForm fieldId={recipe.field_id} fieldArea={field?.area_donum ?? null} today={todayISO()} products={await productOptions()} initial={recipe} />
     </div>
   );
 }

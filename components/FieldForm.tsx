@@ -6,7 +6,7 @@ import type { FormState } from "@/app/actions";
 type Props = {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   crops: string[];
-  initial?: { id: number; full_name: string; phone: string; address: string; crop: string };
+  initial?: { id: number; full_name: string; phone: string; address: string; crop: string; area_donum: number | null };
   sharedFarmerNote?: boolean;
   submitLabel: string;
 };
@@ -38,6 +38,7 @@ export function FieldForm({ action, crops, initial, sharedFarmerNote, submitLabe
         <span>Tarla adresi</span>
         <textarea name="address" rows={2} defaultValue={initial?.address} placeholder="Köy / mahalle, mevki, tarif…" />
       </label>
+      <div className="row2">
       <label className="field">
         <span>Ne tarlası?</span>
         <input name="crop" list="urunler" defaultValue={initial?.crop} placeholder="Muz, çilek, avokado…" autoComplete="off" />
@@ -48,6 +49,18 @@ export function FieldForm({ action, crops, initial, sharedFarmerNote, submitLabe
         </datalist>
         <small>Listeden seçin ya da yazın.</small>
       </label>
+      <label className="field">
+        <span>Kaç dönüm?</span>
+        <input
+          name="area_donum"
+          inputMode="decimal"
+          placeholder="örn. 4"
+          defaultValue={initial?.area_donum != null ? String(initial.area_donum).replace(".", ",") : ""}
+          autoComplete="off"
+        />
+        <small>Reçete toplamları bununla çarpılır.</small>
+      </label>
+      </div>
 
       <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
         {pending ? "Kaydediliyor…" : submitLabel}

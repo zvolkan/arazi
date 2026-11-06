@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getField, getRecipe } from "@/lib/db";
 import { formatDate } from "@/lib/format";
-import { METHOD_LABEL, WEEKS, computeTotals, formatAmount, recipeNo } from "@/lib/recipe";
+import { AMOUNT_BASIS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, recipeNo, totalsBasis } from "@/lib/recipe";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -35,7 +35,8 @@ export default async function RecipePage({
   if (!field) notFound();
 
   const no = recipeNo(recipe.id);
-  const totals = computeTotals(recipe.items);
+  const basis = totalsBasis(recipe.method, recipe.area_donum, recipe.water_per_donum);
+  const totals = computeTotals(recipe.items, basis.factor);
   const pdfUrl = `/api/recete/${recipe.id}`;
 
   return (
@@ -64,8 +65,9 @@ export default async function RecipePage({
       </div>
 
       <div className="panel totals">
-        <h2>Toplam ihtiyaç</h2>
+        <h2>Toplam ihtiyaç · {basis.label}</h2>
         <p className="totals-hint">PDF'in en altında da yer alır.</p>
+        {basis.warning && <p className="alert alert-error" style={{ margin: "0 0 10px" }}>{basis.warning}</p>}
         <ul className="totals-list">
           {totals.map((t) => (
             <li key={`${t.product}|${t.unit}`}>
@@ -80,7 +82,7 @@ export default async function RecipePage({
         const items = recipe.items.filter((it) => it.week === w);
         return (
           <div className="panel" key={w}>
-            <h2>{w}. Hafta</h2>
+            <h2>{w}. Hafta <span className="basis-tag">({AMOUNT_BASIS[recipe.method]})</span></h2>
             {items.length === 0 ? (
               <p style={{ color: "var(--muted)", margin: 0 }}>Bu hafta için ürün yok.</p>
             ) : (

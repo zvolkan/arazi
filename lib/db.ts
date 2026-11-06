@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS recipe_items (
 );
 CREATE INDEX IF NOT EXISTS recipe_items_recipe_idx ON recipe_items (recipe_id);
 ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT '';
+ALTER TABLE fields ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS water_per_donum NUMERIC;
 `;
 
 /** Tablolar yoksa ilk istekte kendiliğinden oluşturulur. */
@@ -107,6 +110,7 @@ export type FieldRow = {
   phone: string;
   address: string;
   crop: string;
+  area_donum: number | null;
   first_visit: string | null;
   last_visit: string | null;
   visit_count: number;
@@ -123,7 +127,7 @@ export type Visit = {
 // ---------- Sorgular ----------
 
 const FIELD_SELECT = `
-  SELECT f.id, f.farmer_id, fa.full_name, fa.phone, f.address, f.crop,
+  SELECT f.id, f.farmer_id, fa.full_name, fa.phone, f.address, f.crop, f.area_donum,
          MIN(v.visit_date) AS first_visit,
          MAX(v.visit_date) AS last_visit,
          COUNT(v.id)::int  AS visit_count,
@@ -184,7 +188,7 @@ export async function listRecipes(fieldId: number) {
 
 export async function getRecipe(id: number): Promise<Recipe | null> {
   const rows = await sql<Omit<Recipe, "items">>(
-    `SELECT id, field_id, recipe_date, method, note FROM recipes WHERE id = $1`,
+    `SELECT id, field_id, recipe_date, method, note, area_donum, water_per_donum FROM recipes WHERE id = $1`,
     [id]
   );
   if (!rows[0]) return null;

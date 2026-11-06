@@ -13,7 +13,9 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - Detayda geçmiş tarihli ziyaret + not ekleme, ziyaret silme, düzenleme
 - Telefona dokununca arama açılır
 - **Reçete:** Sulama / Yapraktan seçimi, 1.–2.–3. hafta için ürün + miktar + birim + açıklama.
-  Ürün bazında **toplam miktar** (örn. Cloud 7 Litre) ekranda ve PDF'in en altında gösterilir.
+  Tarlanın **dönüm** bilgisi kayıtlıdır. Sulamada miktarlar dönüme, yapraktanda 100 L suya girilir
+  (yapraktanda ayrıca dönüme kaç litre su verileceği yazılır). Toplamlar buna göre hesaplanır
+  (örn. Cloud 2+2+3 L/dönüm × 4 dönüm = 28 Litre) ve ekranda + PDF'in en altında gösterilir.
 - Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
 - Şirket içi kullanım için girişsiz; arama motorlarında listelenmez

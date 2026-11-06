@@ -14,6 +14,8 @@ import {
 } from "@/lib/format";
 import { markVisitedToday } from "@/app/actions";
 
+const formatArea = (n: number) => n.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+
 type Row = FieldRow & { status: Status; days: number | null };
 
 const SECTIONS: { status: Status; title: string; alert: boolean }[] = [
@@ -131,6 +133,7 @@ function Section({
                   <th>Telefon</th>
                   <th>Tarla adresi</th>
                   <th>Ürün</th>
+                  <th>Dönüm</th>
                   <th>Durum</th>
                   <th>Son ziyaret</th>
                   <th>Ziyaret</th>
@@ -144,6 +147,7 @@ function Section({
                     <td>{f.phone ? <a className="phone" href={telHref(f.phone)}>{formatPhone(f.phone)}</a> : "—"}</td>
                     <td className="addr">{f.address || "—"}</td>
                     <td>{f.crop ? <span className="crop">{f.crop}</span> : "—"}</td>
+                    <td>{f.area_donum ? formatArea(f.area_donum) : "—"}</td>
                     <td><StatusBadge f={f} today={today} /></td>
                     <td>{f.last_visit ? formatDate(f.last_visit) : "—"}</td>
                     <td>{f.visit_count}</td>
@@ -166,6 +170,7 @@ function Section({
                 </div>
                 <div className="meta">
                   {f.crop && <span className="crop" style={{ marginRight: 6 }}>{f.crop}</span>}
+                  {f.area_donum ? <span className="crop" style={{ marginRight: 6 }}>{formatArea(f.area_donum)} dönüm</span> : null}
                   {f.address || "Adres girilmemiş"}
                 </div>
                 <div className="card-actions">

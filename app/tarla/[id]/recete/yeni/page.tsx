@@ -14,8 +14,8 @@ export default async function NewRecipePage({ params }: { params: Promise<{ id: 
     <div className="narrow">
       <Link href={`/tarla/${field.id}`} className="back">← {field.full_name}</Link>
       <h1 className="page-title">Yeni Reçete</h1>
-      <p className="subtle">{field.full_name}{field.crop ? ` · ${field.crop}` : ""}{field.address ? ` · ${field.address}` : ""}</p>
-      <RecipeForm fieldId={field.id} today={todayISO()} products={await productOptions()} />
+      <p className="subtle">{field.full_name}{field.crop ? ` · ${field.crop}` : ""}{field.area_donum ? ` · ${String(field.area_donum).replace(".", ",")} dönüm` : ""}{field.address ? ` · ${field.address}` : ""}</p>
+      <RecipeForm fieldId={field.id} fieldArea={field.area_donum} today={todayISO()} products={await productOptions()} />
     </div>
   );
 }

@@ -327,6 +327,9 @@ a.phone:hover { text-decoration: underline; }
   .rx-amount { grid-column: 1; }
 }
 
+.basis-hint { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+.basis-hint b { color: var(--accent); }
+.basis-tag { font-weight: 500; font-size: 14px; color: var(--muted); }
 .totals { border-color: var(--accent); background: #fbfdfa; }
 .totals-hint { color: var(--muted); font-size: 13px; margin: -8px 0 10px; }
 .totals-list { list-style: none; margin: 0; padding: 0; }

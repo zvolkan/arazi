@@ -18,6 +18,7 @@ export async function GET() {
     { header: "Telefon", key: "phone", width: 16 },
     { header: "Tarla Adresi", key: "address", width: 40 },
     { header: "Ürün", key: "crop", width: 14 },
+    { header: "Dönüm", key: "area", width: 9 },
     { header: "Durum", key: "status", width: 18 },
     { header: "İlk Ziyaret", key: "first", width: 13 },
     { header: "Son Ziyaret", key: "last", width: 13 },
@@ -30,6 +31,7 @@ export async function GET() {
       phone: f.phone ? formatPhone(f.phone) : "",
       address: f.address,
       crop: f.crop,
+      area: f.area_donum ?? "",
       status: STATUS_LABEL[f.status],
       first: formatDate(f.first_visit),
       last: formatDate(f.last_visit),
@@ -40,7 +42,7 @@ export async function GET() {
   const header = ws.getRow(1);
   header.font = { bold: true, color: { argb: "FFFFFFFF" } };
   header.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2F6B3A" } };
-  ws.autoFilter = { from: "A1", to: "I1" };
+  ws.autoFilter = { from: "A1", to: "J1" };
   ws.getColumn("address").alignment = { wrapText: true, vertical: "top" };
   ws.getColumn("note").alignment = { wrapText: true, vertical: "top" };
 
