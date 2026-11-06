@@ -170,6 +170,7 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     if (!UNITS.includes(it.unit as (typeof UNITS)[number])) return "Geçersiz birim.";
   }
   if (items.length === 0) return "En az bir ürün girin.";
+  if (r.method === "yapraktan" && !(Number(r.water_per_donum) > 0)) return "Yapraktan için dönüme su miktarını girin.";
   return {
     id: r.id ? Number(r.id) : undefined,
     field_id: Number(r.field_id),

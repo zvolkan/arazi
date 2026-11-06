@@ -86,11 +86,20 @@ export const DEFAULT_PRODUCTS = [
   "Fulactiv",
 ];
 
-/** Miktarın neye göre girildiği: sulamada dönüme, yapraktanda 100 L suya */
+/** Miktarlar her iki uygulamada da dönüme girilir */
 export const AMOUNT_BASIS: Record<Method, string> = {
   sulama: "dönüme",
-  yapraktan: "100 L suya",
+  yapraktan: "dönüme",
 };
+
+/**
+ * Yapraktan: dönüme doz, dönüme verilen suda çözülür.
+ * Depoda karıştırma oranı = doz × 100 / dönüme su  (100 L suya düşen miktar)
+ */
+export function per100L(amountPerDonum: number, waterPerDonum: number | null): number | null {
+  if (!waterPerDonum || waterPerDonum <= 0 || !(amountPerDonum > 0)) return null;
+  return (amountPerDonum * 100) / waterPerDonum;
+}
 
 export type Basis = {
   /** Dönüm/100 L başına miktarlar bununla çarpılınca toplam çıkar */
@@ -108,12 +117,17 @@ export function totalsBasis(method: Method, area: number | null, water: number |
     if (!a) return { factor: 1, label: "1 dönüm", warning: "Dönüm girilmediği için toplam 1 dönüme göre." };
     return { factor: a, label: `${formatAmount(a)} dönüm` };
   }
-  // yapraktan
-  if (!w) return { factor: 1, label: "100 L su", warning: "Dönüme su miktarı girilmediği için toplam 100 L suya göre." };
-  const totalWater = w * (a ?? 1);
+  // yapraktan: ürün toplamı yine dönümle çarpılır; su ayrıca hesaplanır
+  const warnings = [
+    !a ? "Dönüm girilmediği için toplam 1 dönüme göre." : "",
+    !w ? "Dönüme su miktarı girilmedi; 100 L suya düşen miktar hesaplanamaz." : "",
+  ].filter(Boolean);
+  const area1 = a ?? 1;
   return {
-    factor: totalWater / 100,
-    label: `${formatAmount(a ?? 1)} dönüm · ${formatAmount(totalWater)} L su`,
-    warning: a ? undefined : "Dönüm girilmediği için toplam 1 dönüme göre.",
+    factor: area1,
+    label: w
+      ? `${formatAmount(area1)} dönüm · ${formatAmount(w * area1)} L su`
+      : `${formatAmount(area1)} dönüm`,
+    warning: warnings.length ? warnings.join(" ") : undefined,
   };
 }

@@ -312,6 +312,7 @@ a.phone:hover { text-decoration: underline; }
   margin-bottom: 8px;
 }
 .rx-note { grid-column: 1 / -1; font-size: 16px; color: var(--text); background: #fafaf7; }
+.rx-calc { grid-column: 1 / -1; font-size: 14px; color: var(--accent); margin-top: -2px; }
 .rx-item-note { display: block; color: var(--muted); font-size: 14px; }
 .rx-del {
   border: 1px solid var(--line);

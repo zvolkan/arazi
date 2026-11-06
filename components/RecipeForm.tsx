@@ -9,6 +9,7 @@ import {
   AMOUNT_BASIS,
   computeTotals,
   totalsBasis,
+  per100L,
   formatAmount,
   parseAmount,
   type Method,
@@ -127,13 +128,14 @@ export function RecipeForm({
         </div>
         {method === "yapraktan" && (
           <label className="field" style={{ marginTop: 14, marginBottom: 0 }}>
-            <span>Dönüme kaç litre su?</span>
+            <span>Dönüme kaç litre su? *</span>
             <input
               inputMode="decimal"
               value={water}
               onChange={(e) => setWater(e.target.value.replace(/[^\d.,]/g, ""))}
               placeholder="örn. 50"
             />
+            <small>Ürünler bu suda çözülür; 100 L suya düşen miktar otomatik hesaplanır.</small>
           </label>
         )}
         {method && (
@@ -172,7 +174,7 @@ export function RecipeForm({
               <input
                 className="rx-amount"
                 inputMode="decimal"
-                placeholder={method === "yapraktan" ? "Miktar/100 L" : "Miktar/dönüm"}
+                placeholder="Miktar/dönüm"
                 value={r.amount}
                 onChange={(e) => setRow(w, r.key, { amount: e.target.value.replace(/[^\d.,]/g, "") })}
               />
@@ -196,6 +198,12 @@ export function RecipeForm({
                 onChange={(e) => setRow(w, r.key, { note: e.target.value })}
                 autoComplete="off"
               />
+              {method === "yapraktan" && (() => {
+                const c = per100L(parseAmount(r.amount), parseAmount(water) || null);
+                return c != null ? (
+                  <div className="rx-calc">100 L suya: <b>{formatAmount(c)} {r.unit}</b></div>
+                ) : null;
+              })()}
             </div>
           ))}
           <button type="button" className="btn btn-sm" onClick={() => addRow(w)}>+ Ürün ekle</button>
@@ -227,8 +235,14 @@ export function RecipeForm({
         )}
       </div>
 
-      <button type="submit" className="btn btn-primary btn-block" disabled={pending || !method}>
-        {pending ? "Kaydediliyor…" : !method ? "Önce Sulama / Yapraktan seçin" : "Reçeteyi Kaydet"}
+      <button type="submit" className="btn btn-primary btn-block" disabled={pending || !method || (method === "yapraktan" && !(parseAmount(water) > 0))}>
+        {pending
+          ? "Kaydediliyor…"
+          : !method
+            ? "Önce Sulama / Yapraktan seçin"
+            : method === "yapraktan" && !(parseAmount(water) > 0)
+              ? "Dönüme su miktarını girin"
+              : "Reçeteyi Kaydet"}
       </button>
     </form>
   );

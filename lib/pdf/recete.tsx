@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { AMOUNT_BASIS, WEEKS, computeTotals, formatAmount, totalsBasis, type Recipe } from "@/lib/recipe";
+import { AMOUNT_BASIS, WEEKS, computeTotals, formatAmount, per100L, totalsBasis, type Recipe } from "@/lib/recipe";
 
 // Türkçe karakterler için gömülü yazı tipi
 const fontDir = path.join(process.cwd(), "fonts");
@@ -83,7 +83,16 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   const basis = totalsBasis(recipe.method, recipe.area_donum, recipe.water_per_donum);
   const totals = computeTotals(recipe.items, basis.factor);
   const per = AMOUNT_BASIS[recipe.method].toLocaleUpperCase("tr-TR");
-  const W = hasNotes ? { p: "38%", a: "27%", n: "35%" } : { p: "62%", a: "38%", n: "0%" };
+  const foliar = recipe.method === "yapraktan" && !!recipe.water_per_donum;
+  // Sütun genişlikleri: Ürün | Dönüme | (100 L suya) | (Açıklama)
+  const W = foliar
+    ? hasNotes
+      ? { p: "32%", a: "17%", c: "19%", n: "32%" }
+      : { p: "50%", a: "25%", c: "25%", n: "0%" }
+    : hasNotes
+      ? { p: "38%", a: "27%", c: "0%", n: "35%" }
+      : { p: "62%", a: "38%", c: "0%", n: "0%" };
+  const alignAmt = hasNotes ? "left" : "right";
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
       <Page size="A5" style={s.page}>
@@ -128,15 +137,21 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
               <View key={w} style={s.week} wrap={false}>
                 <View style={s.th}>
                   <Text style={[s.thText, { width: W.p }]}>{w}. HAFTA</Text>
-                  <Text style={[s.thText, { width: W.a, textAlign: hasNotes ? "left" : "right" }]}>{per}</Text>
+                  <Text style={[s.thText, { width: W.a, textAlign: alignAmt }]}>{per}</Text>
+                  {foliar && <Text style={[s.thText, { width: W.c, textAlign: alignAmt }]}>100 L SUYA</Text>}
                   {hasNotes && <Text style={[s.thText, { width: W.n }]}>AÇIKLAMA</Text>}
                 </View>
                 {items.map((it, i) => (
                   <View key={i} style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }]}>
                     <Text style={[s.td, { width: W.p, fontWeight: 600 }]}>{it.product}</Text>
-                    <Text style={[s.td, { width: W.a, textAlign: hasNotes ? "left" : "right" }]}>
+                    <Text style={[s.td, { width: W.a, textAlign: alignAmt }]}>
                       {formatAmount(it.amount)} {it.unit}
                     </Text>
+                    {foliar && (
+                      <Text style={[s.td, { width: W.c, textAlign: alignAmt }]}>
+                        {formatAmount(per100L(it.amount, recipe.water_per_donum) ?? 0)} {it.unit}
+                      </Text>
+                    )}
                     {hasNotes && <Text style={[s.td, { width: W.n, fontSize: 9.5 }]}>{it.note}</Text>}
                   </View>
                 ))}
