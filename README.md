@@ -12,6 +12,9 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - Ürün filtresi ve arama
 - Detayda geçmiş tarihli ziyaret + not ekleme, ziyaret silme, düzenleme
 - Telefona dokununca arama açılır
+- **Reçete:** Sulama / Yapraktan seçimi, 1.–2.–3. hafta için ürün + miktar + birim.
+  Ekranda ürün bazında **toplam ihtiyaç** (örn. Cloud 7 Litre) gösterilir, PDF'te görünmez.
+- Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
 - Şirket içi kullanım için girişsiz; arama motorlarında listelenmez
 - iPhone'da Safari → Paylaş → **Ana Ekrana Ekle** ile uygulama gibi açılır
@@ -44,15 +47,24 @@ app/
   tarla/[id]/page.tsx      Tarla detayı + ziyaretler
   tarla/[id]/duzenle/      Düzenleme
   api/disa-aktar/route.ts  Excel dışa aktarma
+  tarla/[id]/recete/yeni/  Yeni reçete
+  recete/[id]/             Reçete görüntüleme, PDF paylaşma, düzenleme
+  api/recete/[id]/         Reçete PDF'i
   actions.ts               Tüm kayıt/silme işlemleri
 components/                Liste, formlar, butonlar
 lib/db.ts                  Veritabanı bağlantısı, şema, sorgular
 lib/format.ts              Tarih, telefon, metin yardımcıları
+lib/recipe.ts              Reçete türleri, toplam hesabı, ürün önerileri
+lib/pdf/recete.tsx         PDF tasarımı (başlık, adres, telefon burada)
+public/brand/              Logo (beyaz / siyah)
+fonts/                     PDF yazı tipi (Inter, OFL lisanslı)
 ```
 
 ## Ayarlar
 
 - Hatırlatma süresi: `lib/format.ts` → `REVISIT_DAYS` (varsayılan 21 gün)
+- PDF'teki mühendis adı ve alt bilgi: `lib/pdf/recete.tsx` → `PDF_BRAND`
+- Başlangıç ürün önerileri: `lib/recipe.ts` → `DEFAULT_PRODUCTS` (yazılan ürünler otomatik eklenir)
 
 ## Ürün listesi
 

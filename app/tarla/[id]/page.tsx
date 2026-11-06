@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getField, listVisits, otherFieldsOfFarmer } from "@/lib/db";
+import { getField, listRecipes, listVisits, otherFieldsOfFarmer } from "@/lib/db";
+import { METHOD_LABEL, recipeNo } from "@/lib/recipe";
 import { formatDate, formatPhone, telHref, todayISO } from "@/lib/format";
 import { deleteField, deleteVisit } from "@/app/actions";
 import { StatusBadge } from "@/components/FieldList";
@@ -21,9 +22,10 @@ export default async function FieldPage({
   const field = Number.isInteger(id) ? await getField(id) : null;
   if (!field) notFound();
 
-  const [visits, others] = await Promise.all([
+  const [visits, others, recipes] = await Promise.all([
     listVisits(field.id),
     otherFieldsOfFarmer(field.farmer_id, field.id),
+    listRecipes(field.id),
   ]);
 
   return (
@@ -64,6 +66,28 @@ export default async function FieldPage({
       <div className="panel">
         <h2>Ziyaret Ekle</h2>
         <VisitForm fieldId={field.id} today={todayISO()} />
+      </div>
+
+      <div className="panel">
+        <div className="week-head">
+          <h2>Reçeteler ({recipes.length})</h2>
+          <Link href={`/tarla/${field.id}/recete/yeni`} className="btn btn-sm btn-primary">+ Reçete Yaz</Link>
+        </div>
+        {recipes.length === 0 ? (
+          <p style={{ color: "var(--muted)", margin: 0 }}>Henüz reçete yazılmadı.</p>
+        ) : (
+          <ul className="visit-list">
+            {recipes.map((r) => (
+              <li key={r.id}>
+                <Link href={`/recete/${r.id}`} style={{ textDecoration: "none", flex: 1 }}>
+                  <div className="date">No {recipeNo(r.id)} · {formatDate(r.recipe_date)}</div>
+                  <div className="note">{METHOD_LABEL[r.method]} · {r.item_count} ürün</div>
+                </Link>
+                <span aria-hidden style={{ alignSelf: "center" }}>›</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="panel">

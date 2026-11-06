@@ -1,7 +1,10 @@
 import { Pool, types } from "pg";
+import { DEFAULT_PRODUCTS, type Recipe, type RecipeItem } from "./recipe";
 
 // DATE kolonlarını JS Date yerine "YYYY-MM-DD" metni olarak al (saat dilimi kaymasını önler)
 types.setTypeParser(1082, (v) => v);
+// NUMERIC kolonlarını sayı olarak al
+types.setTypeParser(1700, (v) => parseFloat(v));
 
 const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
@@ -51,6 +54,27 @@ CREATE TABLE IF NOT EXISTS visits (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS visits_field_idx ON visits (field_id);
+
+CREATE TABLE IF NOT EXISTS recipes (
+  id          SERIAL PRIMARY KEY,
+  field_id    INTEGER NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+  recipe_date DATE NOT NULL,
+  method      TEXT NOT NULL,
+  note        TEXT NOT NULL DEFAULT '',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS recipes_field_idx ON recipes (field_id);
+
+CREATE TABLE IF NOT EXISTS recipe_items (
+  id        SERIAL PRIMARY KEY,
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  week      SMALLINT NOT NULL,
+  position  SMALLINT NOT NULL DEFAULT 0,
+  product   TEXT NOT NULL,
+  amount    NUMERIC NOT NULL,
+  unit      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS recipe_items_recipe_idx ON recipe_items (recipe_id);
 `;
 
 /** Tablolar yoksa ilk istekte kendiliğinden oluşturulur. */
@@ -143,4 +167,41 @@ export async function listCrops(): Promise<string[]> {
     `SELECT DISTINCT crop FROM fields WHERE crop <> ''`
   );
   return rows.map((r) => r.crop);
+}
+
+// ---------- Reçeteler ----------
+
+export async function listRecipes(fieldId: number) {
+  return sql<{ id: number; recipe_date: string; method: Recipe["method"]; item_count: number }>(
+    `SELECT r.id, r.recipe_date, r.method, COUNT(i.id)::int AS item_count
+       FROM recipes r LEFT JOIN recipe_items i ON i.recipe_id = r.id
+      WHERE r.field_id = $1
+      GROUP BY r.id ORDER BY r.recipe_date DESC, r.id DESC`,
+    [fieldId]
+  );
+}
+
+export async function getRecipe(id: number): Promise<Recipe | null> {
+  const rows = await sql<Omit<Recipe, "items">>(
+    `SELECT id, field_id, recipe_date, method, note FROM recipes WHERE id = $1`,
+    [id]
+  );
+  if (!rows[0]) return null;
+  const items = await sql<RecipeItem>(
+    `SELECT week, product, amount, unit FROM recipe_items
+      WHERE recipe_id = $1 ORDER BY week, position, id`,
+    [id]
+  );
+  return { ...rows[0], items };
+}
+
+/** Ürün önerileri: varsayılanlar + daha önce reçetede yazılmış ürünler */
+export async function productOptions(): Promise<string[]> {
+  const rows = await sql<{ product: string }>(`SELECT DISTINCT product FROM recipe_items`);
+  const seen = new Map<string, string>();
+  for (const p of [...DEFAULT_PRODUCTS, ...rows.map((r) => r.product)]) {
+    const k = p.toLocaleLowerCase("tr-TR");
+    if (!seen.has(k)) seen.set(k, p);
+  }
+  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, "tr"));
 }

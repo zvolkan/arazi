@@ -1,0 +1,153 @@
+import path from "node:path";
+import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { WEEKS, formatAmount, type Recipe } from "@/lib/recipe";
+
+// Türkçe karakterler için gömülü yazı tipi
+const fontDir = path.join(process.cwd(), "fonts");
+Font.register({
+  family: "Inter",
+  fonts: [
+    { src: path.join(fontDir, "Inter-Regular.otf"), fontWeight: 400 },
+    { src: path.join(fontDir, "Inter-SemiBold.otf"), fontWeight: 600 },
+    { src: path.join(fontDir, "Inter-Bold.otf"), fontWeight: 700 },
+  ],
+});
+Font.registerHyphenationCallback((w) => [w]);
+
+const LOGO = path.join(process.cwd(), "public/brand/logo-beyaz.png");
+
+export const PDF_BRAND = {
+  engineer: "Zir. Müh. D.Ali Bulut",
+  footer: "Yeşilyurt Mah. Kazım Karabekir Cad. No:13/9 Anamur / Mersin  ·  Gsm: 0507 178 16 33",
+};
+
+const C = {
+  green: "#2f6b3a",
+  greenSoft: "#e9f1e7",
+  text: "#1f2a22",
+  muted: "#6b746e",
+  line: "#d9dcd5",
+  zebra: "#f7f8f5",
+};
+
+const s = StyleSheet.create({
+  page: { fontFamily: "Inter", fontSize: 9.5, color: C.text, paddingBottom: 40 },
+  band: {
+    backgroundColor: C.green,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  engineer: { color: "#fff", fontSize: 13, fontWeight: 700, textAlign: "right" },
+  sub: { color: "#dfeadc", fontSize: 8, textAlign: "right", marginTop: 3 },
+  body: { paddingHorizontal: 28, paddingTop: 14 },
+  info: { flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: C.line, borderRadius: 4, marginBottom: 12 },
+  cell: { width: "50%", paddingVertical: 6, paddingHorizontal: 8 },
+  label: { fontSize: 7, color: C.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 },
+  value: { fontSize: 10, fontWeight: 600 },
+  method: {
+    alignSelf: "flex-start",
+    backgroundColor: C.greenSoft,
+    color: C.green,
+    fontWeight: 700,
+    fontSize: 8.5,
+    letterSpacing: 0.8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 3,
+    marginBottom: 10,
+  },
+  week: { marginBottom: 10 },
+  th: { flexDirection: "row", backgroundColor: C.green, borderTopLeftRadius: 3, borderTopRightRadius: 3 },
+  thText: { color: "#fff", fontWeight: 700, fontSize: 8.5, paddingVertical: 5, paddingHorizontal: 8 },
+  tr: { flexDirection: "row", borderBottomWidth: 1, borderColor: C.line },
+  td: { paddingVertical: 5, paddingHorizontal: 8, fontSize: 10 },
+  footer: { position: "absolute", bottom: 14, left: 24, right: 24, textAlign: "center", fontSize: 7, color: C.muted },
+});
+
+export type RecetePdfData = {
+  no: string;
+  date: string;
+  farmerName: string;
+  phone: string;
+  address: string;
+  crop: string;
+  recipe: Recipe;
+};
+
+export function RecetePdf({ d }: { d: RecetePdfData }) {
+  const { recipe } = d;
+  return (
+    <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
+      <Page size="A5" style={s.page}>
+        <View style={s.band}>
+          <Image src={LOGO} style={{ height: 40, objectFit: "contain" }} />
+          <View>
+            <Text style={s.engineer}>{PDF_BRAND.engineer}</Text>
+            <Text style={s.sub}>No: {d.no}  ·  {d.date}</Text>
+          </View>
+        </View>
+
+        <View style={s.body}>
+          <View style={s.info}>
+            <View style={[s.cell, { borderRightWidth: 1, borderBottomWidth: 1, borderColor: C.line }]}>
+              <Text style={s.label}>Çiftçi</Text>
+              <Text style={s.value}>{d.farmerName}</Text>
+            </View>
+            <View style={[s.cell, { borderBottomWidth: 1, borderColor: C.line }]}>
+              <Text style={s.label}>Telefon</Text>
+              <Text style={s.value}>{d.phone || "—"}</Text>
+            </View>
+            <View style={[s.cell, { borderRightWidth: 1, borderColor: C.line }]}>
+              <Text style={s.label}>Tarla</Text>
+              <Text style={s.value}>{d.address || "—"}</Text>
+            </View>
+            <View style={s.cell}>
+              <Text style={s.label}>Ürün</Text>
+              <Text style={s.value}>{d.crop || "—"}</Text>
+            </View>
+          </View>
+
+          <Text style={s.method}>{recipe.method === "sulama" ? "SULAMA İLE UYGULAMA" : "YAPRAKTAN UYGULAMA"}</Text>
+
+          {WEEKS.map((w) => {
+            const items = recipe.items.filter((it) => it.week === w);
+            if (items.length === 0) return null;
+            return (
+              <View key={w} style={s.week} wrap={false}>
+                <View style={s.th}>
+                  <Text style={[s.thText, { width: "68%" }]}>{w}. HAFTA</Text>
+                  <Text style={[s.thText, { width: "32%", textAlign: "right" }]}>MİKTAR</Text>
+                </View>
+                {items.map((it, i) => (
+                  <View key={i} style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }]}>
+                    <Text style={[s.td, { width: "68%", fontWeight: 600 }]}>{it.product}</Text>
+                    <Text style={[s.td, { width: "32%", textAlign: "right" }]}>
+                      {formatAmount(it.amount)} {it.unit}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+
+          {recipe.note ? (
+            <View style={{ marginTop: 4, padding: 9, backgroundColor: C.greenSoft, borderRadius: 4 }} wrap={false}>
+              <Text style={[s.label, { color: C.green }]}>Açıklama</Text>
+              <Text style={{ fontSize: 9.5, lineHeight: 1.4 }}>{recipe.note}</Text>
+            </View>
+          ) : null}
+
+          <View style={{ marginTop: 22, alignSelf: "flex-end", width: 150, alignItems: "center" }} wrap={false}>
+            <View style={{ borderTopWidth: 1, borderColor: C.text, width: "100%", marginBottom: 4 }} />
+            <Text style={{ fontSize: 8.5, color: C.muted }}>{PDF_BRAND.engineer}</Text>
+          </View>
+        </View>
+
+        <Text style={s.footer} fixed>{PDF_BRAND.footer}</Text>
+      </Page>
+    </Document>
+  );
+}

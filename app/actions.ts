@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { sql } from "@/lib/db";
+import { productOptions, sql } from "@/lib/db";
 import { normalizeCrop, normalizeName, phoneKey, todayISO } from "@/lib/format";
+import { UNITS, type Method, type RecipeItem } from "@/lib/recipe";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -124,4 +125,101 @@ export async function deleteVisit(fd: FormData) {
   await sql(`DELETE FROM visits WHERE id = $1`, [id]);
   revalidatePath("/");
   revalidatePath(`/tarla/${fieldId}`);
+}
+
+// ---------- Reçete ----------
+
+type RecipePayload = {
+  id?: number;
+  field_id: number;
+  recipe_date: string;
+  method: Method;
+  note: string;
+  items: RecipeItem[];
+};
+
+function cleanRecipe(raw: unknown): RecipePayload | string {
+  const r = raw as Partial<RecipePayload>;
+  if (!r || typeof r !== "object") return "Geçersiz veri.";
+  if (r.method !== "sulama" && r.method !== "yapraktan") return "Sulama veya Yapraktan seçin.";
+  const items = (Array.isArray(r.items) ? r.items : [])
+    .map((it) => ({
+      week: Number(it.week),
+      product: String(it.product ?? "").trim().replace(/\s+/g, " "),
+      amount: Number(it.amount),
+      unit: it.unit,
+    }))
+    .filter((it) => it.product);
+  for (const it of items) {
+    if (![1, 2, 3].includes(it.week)) return "Geçersiz hafta.";
+    if (!(it.amount > 0)) return `"${it.product}" için miktar girin.`;
+    if (!UNITS.includes(it.unit as (typeof UNITS)[number])) return "Geçersiz birim.";
+  }
+  if (items.length === 0) return "En az bir ürün girin.";
+  return {
+    id: r.id ? Number(r.id) : undefined,
+    field_id: Number(r.field_id),
+    recipe_date: validDate(String(r.recipe_date ?? "")),
+    method: r.method,
+    note: String(r.note ?? "").trim(),
+    items: items as RecipeItem[],
+  };
+}
+
+export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormState> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(String(fd.get("payload") ?? ""));
+  } catch {
+    return { error: "Geçersiz veri." };
+  }
+  const r = cleanRecipe(parsed);
+  if (typeof r === "string") return { error: r };
+
+  // Bilinen bir ürün farklı büyük/küçük harfle yazıldıysa kayıtlı yazımını kullan ("cloud" → "Cloud")
+  const known = new Map((await productOptions()).map((p) => [p.toLocaleLowerCase("tr-TR"), p]));
+  for (const it of r.items) it.product = known.get(it.product.toLocaleLowerCase("tr-TR")) ?? it.product;
+
+  let id = r.id;
+  if (id) {
+    const upd = await sql<{ id: number }>(
+      `UPDATE recipes SET recipe_date = $2, method = $3, note = $4 WHERE id = $1 RETURNING id`,
+      [id, r.recipe_date, r.method, r.note]
+    );
+    if (!upd[0]) return { error: "Reçete bulunamadı." };
+    await sql(`DELETE FROM recipe_items WHERE recipe_id = $1`, [id]);
+  } else {
+    const ins = await sql<{ id: number }>(
+      `INSERT INTO recipes (field_id, recipe_date, method, note)
+       SELECT $1, $2, $3, $4 WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1)
+       RETURNING id`,
+      [r.field_id, r.recipe_date, r.method, r.note]
+    );
+    if (!ins[0]) return { error: "Tarla bulunamadı." };
+    id = ins[0].id;
+  }
+
+  const values: unknown[] = [];
+  const tuples = r.items.map((it, i) => {
+    values.push(id, it.week, i, it.product, it.amount, it.unit);
+    const b = i * 6;
+    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6})`;
+  });
+  await sql(
+    `INSERT INTO recipe_items (recipe_id, week, position, product, amount, unit) VALUES ${tuples.join(", ")}`,
+    values
+  );
+  revalidatePath(`/tarla/${r.field_id}`);
+  redirect(`/recete/${id}?kaydedildi=1`);
+}
+
+export async function deleteRecipe(fd: FormData) {
+  const id = Number(str(fd, "id"));
+  const rows = await sql<{ field_id: number }>(
+    `DELETE FROM recipes WHERE id = $1 RETURNING field_id`,
+    [id]
+  );
+  const fieldId = rows[0]?.field_id;
+  if (fieldId) revalidatePath(`/tarla/${fieldId}`);
+  redirect(fieldId ? `/tarla/${fieldId}` : "/");
 }

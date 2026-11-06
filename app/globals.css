@@ -54,13 +54,9 @@ a { color: inherit; }
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
-.brand-mark {
-  width: 28px; height: 28px; border-radius: 8px;
-  background: #fff; color: var(--accent);
-  display: grid; place-items: center; font-size: 16px;
-}
+.brand-logo { height: 30px; width: auto; display: block; }
 
 .container {
   max-width: 1200px;
@@ -289,3 +285,57 @@ a.phone:hover { text-decoration: underline; }
 .actions-row > * { flex: 1 1 140px; }
 
 .login-box { max-width: 360px; margin: 12vh auto 0; }
+
+/* ---------- Reçete ---------- */
+.subtle { color: var(--muted); margin: -8px 0 14px; font-size: 15px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg-btn {
+  min-height: 52px;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+  cursor: pointer;
+}
+.seg-btn.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+.week-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.week-head h2 { margin: 0; }
+
+.rx-row {
+  display: grid;
+  grid-template-columns: 1fr 96px 72px 40px;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.rx-del {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 10px;
+  font-size: 22px;
+  color: var(--muted);
+  cursor: pointer;
+}
+@media (max-width: 520px) {
+  .rx-row { grid-template-columns: 1fr 72px 44px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+  .rx-product { grid-column: 1 / -1; }
+  .rx-amount { grid-column: 1; }
+}
+
+.totals { border-color: var(--accent); background: #fbfdfa; }
+.totals-hint { color: var(--muted); font-size: 13px; margin: -8px 0 10px; }
+.totals-list { list-style: none; margin: 0; padding: 0; }
+.totals-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.totals-list li:last-child { border-bottom: 0; }
+
+.btn-whatsapp { background: #1fa855; border-color: #1fa855; color: #fff; font-size: 17px; min-height: 50px; }
+.share-hint { color: var(--muted); font-size: 13px; text-align: center; margin: 6px 0 10px; }
