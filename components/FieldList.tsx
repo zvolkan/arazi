@@ -44,7 +44,7 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
     for (const f of fields) {
       if (crop && f.crop !== crop) continue;
       if (needle) {
-        const textHit = trLower(`${f.full_name} ${f.address} ${f.crop}`).includes(needle);
+        const textHit = trLower(f.full_name).includes(needle);
         const phoneHit = needleDigits.length >= 3 && f.phone.replace(/\D/g, "").includes(needleDigits);
         if (!textHit && !phoneHit) continue;
       }
@@ -80,7 +80,7 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
         <input
           className="search"
           type="search"
-          placeholder="Ara: isim, telefon, adres…"
+          placeholder="Ara: isim veya telefon"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
