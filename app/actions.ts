@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { productOptions, sql } from "@/lib/db";
 import { normalizeCrop, normalizeName, phoneKey, todayISO } from "@/lib/format";
-import { UNITS, type Method, type RecipeItem } from "@/lib/recipe";
+import { UNITS, waterOrDefault, type Method, type RecipeItem } from "@/lib/recipe";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -170,7 +170,6 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     if (!UNITS.includes(it.unit as (typeof UNITS)[number])) return "Geçersiz birim.";
   }
   if (items.length === 0) return "En az bir ürün girin.";
-  if (r.method === "yapraktan" && !(Number(r.water_per_donum) > 0)) return "Yapraktan için dönüme su miktarını girin.";
   return {
     id: r.id ? Number(r.id) : undefined,
     field_id: Number(r.field_id),
@@ -178,7 +177,7 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     method: r.method,
     note: String(r.note ?? "").trim(),
     area_donum: Number(r.area_donum) > 0 ? Number(r.area_donum) : null,
-    water_per_donum: r.method === "yapraktan" && Number(r.water_per_donum) > 0 ? Number(r.water_per_donum) : null,
+    water_per_donum: r.method === "yapraktan" ? waterOrDefault(Number(r.water_per_donum)) : null,
     items: items as RecipeItem[],
   };
 }

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { AMOUNT_BASIS, WEEKS, computeTotals, formatAmount, per100L, totalsBasis, type Recipe } from "@/lib/recipe";
+import { AMOUNT_BASIS, WEEKS, computeTotals, formatAmount, per100L, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
 
 // Türkçe karakterler için gömülü yazı tipi
 const fontDir = path.join(process.cwd(), "fonts");
@@ -83,7 +83,8 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   const basis = totalsBasis(recipe.method, recipe.area_donum, recipe.water_per_donum);
   const totals = computeTotals(recipe.items, basis.factor);
   const per = AMOUNT_BASIS[recipe.method].toLocaleUpperCase("tr-TR");
-  const foliar = recipe.method === "yapraktan" && !!recipe.water_per_donum;
+  const foliar = recipe.method === "yapraktan";
+  const water = waterOrDefault(recipe.water_per_donum);
   // Sütun genişlikleri: Ürün | Dönüme | (100 L suya) | (Açıklama)
   const W = foliar
     ? hasNotes
@@ -128,7 +129,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
           </View>
 
           <Text style={s.method}>{recipe.method === "sulama" ? "SULAMA İLE UYGULAMA" : "YAPRAKTAN UYGULAMA"}
-            {recipe.method === "yapraktan" && recipe.water_per_donum ? `  ·  DÖNÜME ${formatAmount(recipe.water_per_donum)} L SU` : ""}</Text>
+            {foliar ? `  ·  DÖNÜME ${formatAmount(water)} L SU` : ""}</Text>
 
           {WEEKS.map((w) => {
             const items = recipe.items.filter((it) => it.week === w);
@@ -149,7 +150,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
                     </Text>
                     {foliar && (
                       <Text style={[s.td, { width: W.c, textAlign: alignAmt }]}>
-                        {formatAmount(per100L(it.amount, recipe.water_per_donum) ?? 0)} {it.unit}
+                        {formatAmount(per100L(it.amount, water) ?? 0)} {it.unit}
                       </Text>
                     )}
                     {hasNotes && <Text style={[s.td, { width: W.n, fontSize: 9.5 }]}>{it.note}</Text>}

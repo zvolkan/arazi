@@ -96,6 +96,14 @@ export const AMOUNT_BASIS: Record<Method, string> = {
  * Yapraktan: dönüme doz, dönüme verilen suda çözülür.
  * Depoda karıştırma oranı = doz × 100 / dönüme su  (100 L suya düşen miktar)
  */
+/** Yapraktanda dönüme su girilmezse kullanılan değer (L) */
+export const DEFAULT_WATER_PER_DONUM = 100;
+
+/** Yapraktan için geçerli dönüme su: girilmediyse 100 L */
+export function waterOrDefault(water: number | null | undefined): number {
+  return water && water > 0 ? water : DEFAULT_WATER_PER_DONUM;
+}
+
 export function per100L(amountPerDonum: number, waterPerDonum: number | null): number | null {
   if (!waterPerDonum || waterPerDonum <= 0 || !(amountPerDonum > 0)) return null;
   return (amountPerDonum * 100) / waterPerDonum;
@@ -112,22 +120,16 @@ export type Basis = {
 
 export function totalsBasis(method: Method, area: number | null, water: number | null): Basis {
   const a = area && area > 0 ? area : null;
-  const w = water && water > 0 ? water : null;
   if (method === "sulama") {
     if (!a) return { factor: 1, label: "1 dönüm", warning: "Dönüm girilmediği için toplam 1 dönüme göre." };
     return { factor: a, label: `${formatAmount(a)} dönüm` };
   }
-  // yapraktan: ürün toplamı yine dönümle çarpılır; su ayrıca hesaplanır
-  const warnings = [
-    !a ? "Dönüm girilmediği için toplam 1 dönüme göre." : "",
-    !w ? "Dönüme su miktarı girilmedi; 100 L suya düşen miktar hesaplanamaz." : "",
-  ].filter(Boolean);
+  // yapraktan: ürün toplamı yine dönümle çarpılır; su ayrıca hesaplanır (girilmezse dönüme 100 L)
+  const w = waterOrDefault(water);
   const area1 = a ?? 1;
   return {
     factor: area1,
-    label: w
-      ? `${formatAmount(area1)} dönüm · ${formatAmount(w * area1)} L su`
-      : `${formatAmount(area1)} dönüm`,
-    warning: warnings.length ? warnings.join(" ") : undefined,
+    label: `${formatAmount(area1)} dönüm · ${formatAmount(w * area1)} L su`,
+    warning: a ? undefined : "Dönüm girilmediği için toplam 1 dönüme göre.",
   };
 }
