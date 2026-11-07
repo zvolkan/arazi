@@ -312,6 +312,20 @@ a.phone:hover { text-decoration: underline; }
   margin-bottom: 8px;
 }
 .rx-note { grid-column: 1 / -1; font-size: 16px; color: var(--text); background: #fafaf7; }
+.name-cell { display: inline-flex; align-items: center; gap: 4px; }
+.star {
+  border: 0;
+  background: none;
+  padding: 0 4px;
+  min-width: 32px;
+  min-height: 32px;
+  font-size: 22px;
+  line-height: 1;
+  color: #c9ccc5;
+  cursor: pointer;
+}
+.star.on { color: #e0a800; }
+.star-lg { font-size: 28px; min-width: 40px; min-height: 40px; }
 .rx-calc { grid-column: 1 / -1; font-size: 14px; color: var(--accent); margin-top: -2px; }
 .rx-item-note { display: block; color: var(--muted); font-size: 14px; }
 .rx-del {

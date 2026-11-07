@@ -9,11 +9,17 @@ export async function GET() {
   const order = { gidilmedi: 0, tekrar: 1, gidildi: 2 } as const;
   const fields = (await listFields())
     .map((f) => ({ ...f, ...fieldStatus(f, today) }))
-    .sort((a, b) => order[a.status] - order[b.status] || a.full_name.localeCompare(b.full_name, "tr"));
+    .sort(
+      (a, b) =>
+        order[a.status] - order[b.status] ||
+        Number(b.starred) - Number(a.starred) ||
+        a.full_name.localeCompare(b.full_name, "tr")
+    );
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Tarlalar", { views: [{ state: "frozen", ySplit: 1 }] });
   ws.columns = [
+    { header: "Öncelik", key: "star", width: 9 },
     { header: "Çiftçi", key: "name", width: 24 },
     { header: "Telefon", key: "phone", width: 16 },
     { header: "Tarla Adresi", key: "address", width: 40 },
@@ -27,6 +33,7 @@ export async function GET() {
   ];
   for (const f of fields) {
     ws.addRow({
+      star: f.starred ? "★" : "",
       name: f.full_name,
       phone: f.phone ? formatPhone(f.phone) : "",
       address: f.address,
@@ -42,7 +49,7 @@ export async function GET() {
   const header = ws.getRow(1);
   header.font = { bold: true, color: { argb: "FFFFFFFF" } };
   header.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2F6B3A" } };
-  ws.autoFilter = { from: "A1", to: "J1" };
+  ws.autoFilter = { from: "A1", to: "K1" };
   ws.getColumn("address").alignment = { wrapText: true, vertical: "top" };
   ws.getColumn("note").alignment = { wrapText: true, vertical: "top" };
 

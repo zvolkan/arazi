@@ -239,3 +239,16 @@ export async function deleteRecipe(fd: FormData) {
   if (fieldId) revalidatePath(`/tarla/${fieldId}`);
   redirect(fieldId ? `/tarla/${fieldId}` : "/");
 }
+
+// ---------- Öncelik (yıldız) ----------
+
+/** Tarlanın çiftçisini öncelikli yapar / kaldırır (çiftçinin tüm tarlaları etkilenir). */
+export async function toggleStar(fieldId: number) {
+  await sql(
+    `UPDATE farmers SET starred = NOT starred
+      WHERE id = (SELECT farmer_id FROM fields WHERE id = $1)`,
+    [fieldId]
+  );
+  revalidatePath("/");
+  revalidatePath(`/tarla/${fieldId}`);
+}

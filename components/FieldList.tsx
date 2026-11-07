@@ -13,6 +13,7 @@ import {
   type Status,
 } from "@/lib/format";
 import { markVisitedToday } from "@/app/actions";
+import { StarButton } from "@/components/StarButton";
 
 const formatArea = (n: number) => n.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
 
@@ -50,9 +51,11 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
       const row = { ...f, ...fieldStatus(f, today) };
       g[row.status].push(row);
     }
-    const byName = (a: Row, b: Row) => a.full_name.localeCompare(b.full_name, "tr");
+    // Her bölümde önce yıldızlılar
+    const star = (a: Row, b: Row) => Number(b.starred) - Number(a.starred);
+    const byName = (a: Row, b: Row) => star(a, b) || a.full_name.localeCompare(b.full_name, "tr");
     g.gidilmedi.sort(byName);
-    g.tekrar.sort((a, b) => (b.days ?? 0) - (a.days ?? 0)); // en uzun süredir gidilmeyen üstte
+    g.tekrar.sort((a, b) => star(a, b) || (b.days ?? 0) - (a.days ?? 0)); // en uzun süredir gidilmeyen üstte
     g.gidildi.sort(byName);
     return g;
   }, [fields, today, crop, q]);
@@ -143,7 +146,12 @@ function Section({
               <tbody>
                 {rows.map((f) => (
                   <tr key={f.id} className={alert ? "row-alert" : undefined}>
-                    <td><Link className="name" href={`/tarla/${f.id}`}>{f.full_name}</Link></td>
+                    <td>
+                      <span className="name-cell">
+                        <StarButton fieldId={f.id} starred={f.starred} />
+                        <Link className="name" href={`/tarla/${f.id}`}>{f.full_name}</Link>
+                      </span>
+                    </td>
                     <td>{f.phone ? <a className="phone" href={telHref(f.phone)}>{formatPhone(f.phone)}</a> : "—"}</td>
                     <td className="addr">{f.address || "—"}</td>
                     <td>{f.crop ? <span className="crop">{f.crop}</span> : "—"}</td>
@@ -165,7 +173,10 @@ function Section({
             {rows.map((f) => (
               <div className={`card${alert ? " card-alert" : ""}`} key={f.id}>
                 <div className="card-head">
-                  <Link href={`/tarla/${f.id}`}>{f.full_name}</Link>
+                  <span className="name-cell">
+                    <StarButton fieldId={f.id} starred={f.starred} />
+                    <Link href={`/tarla/${f.id}`}>{f.full_name}</Link>
+                  </span>
                   <StatusBadge f={f} today={today} />
                 </div>
                 <div className="meta">

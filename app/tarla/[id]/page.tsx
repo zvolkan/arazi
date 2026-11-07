@@ -5,6 +5,7 @@ import { METHOD_LABEL, recipeNo } from "@/lib/recipe";
 import { formatDate, formatPhone, telHref, todayISO } from "@/lib/format";
 import { deleteField, deleteVisit } from "@/app/actions";
 import { StatusBadge } from "@/components/FieldList";
+import { StarButton } from "@/components/StarButton";
 import { VisitForm } from "@/components/VisitForm";
 import { ConfirmButton } from "@/components/ConfirmButton";
 
@@ -37,7 +38,10 @@ export default async function FieldPage({
 
       <div className="panel">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
-          <h1 className="page-title" style={{ margin: 0 }}>{field.full_name}</h1>
+          <h1 className="page-title name-cell" style={{ margin: 0 }}>
+            <StarButton fieldId={field.id} starred={field.starred} size="lg" />
+            {field.full_name}
+          </h1>
           <StatusBadge f={field} today={todayISO()} />
         </div>
 

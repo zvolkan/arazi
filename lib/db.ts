@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS recipe_items (
 CREATE INDEX IF NOT EXISTS recipe_items_recipe_idx ON recipe_items (recipe_id);
 ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT '';
 ALTER TABLE fields ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
+ALTER TABLE farmers ADD COLUMN IF NOT EXISTS starred BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS water_per_donum NUMERIC;
 `;
@@ -111,6 +112,7 @@ export type FieldRow = {
   address: string;
   crop: string;
   area_donum: number | null;
+  starred: boolean;
   first_visit: string | null;
   last_visit: string | null;
   visit_count: number;
@@ -127,7 +129,7 @@ export type Visit = {
 // ---------- Sorgular ----------
 
 const FIELD_SELECT = `
-  SELECT f.id, f.farmer_id, fa.full_name, fa.phone, f.address, f.crop, f.area_donum,
+  SELECT f.id, f.farmer_id, fa.full_name, fa.phone, f.address, f.crop, f.area_donum, fa.starred,
          MIN(v.visit_date) AS first_visit,
          MAX(v.visit_date) AS last_visit,
          COUNT(v.id)::int  AS visit_count,
