@@ -80,6 +80,21 @@ ALTER TABLE fields ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
 ALTER TABLE farmers ADD COLUMN IF NOT EXISTS starred BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS water_per_donum NUMERIC;
+
+-- Silinenler: kayıtlar 30 gün boyunca geri alınabilir
+ALTER TABLE fields  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE visits  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+-- Bölge
+ALTER TABLE fields ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';
+
+-- Günlük otomatik yedekler (tüm tabloların kopyası)
+CREATE TABLE IF NOT EXISTS backups (
+  id         SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  data       JSONB NOT NULL
+);
 `;
 
 /** Tablolar yoksa ilk istekte kendiliğinden oluşturulur. */
@@ -110,6 +125,7 @@ export type FieldRow = {
   full_name: string;
   phone: string;
   address: string;
+  region: string;
   crop: string;
   area_donum: number | null;
   starred: boolean;
@@ -129,25 +145,25 @@ export type Visit = {
 // ---------- Sorgular ----------
 
 const FIELD_SELECT = `
-  SELECT f.id, f.farmer_id, fa.full_name, fa.phone, f.address, f.crop, f.area_donum, fa.starred,
+  SELECT f.id, f.farmer_id, fa.full_name, fa.phone, f.address, f.region, f.crop, f.area_donum, fa.starred,
          MIN(v.visit_date) AS first_visit,
          MAX(v.visit_date) AS last_visit,
          COUNT(v.id)::int  AS visit_count,
          COALESCE((SELECT v2.note FROM visits v2
-                    WHERE v2.field_id = f.id AND v2.note <> ''
+                    WHERE v2.field_id = f.id AND v2.note <> '' AND v2.deleted_at IS NULL
                     ORDER BY v2.visit_date DESC, v2.id DESC LIMIT 1), '') AS last_note
     FROM fields f
     JOIN farmers fa ON fa.id = f.farmer_id
-    LEFT JOIN visits v ON v.field_id = f.id
+    LEFT JOIN visits v ON v.field_id = f.id AND v.deleted_at IS NULL
 `;
 
 export async function listFields(): Promise<FieldRow[]> {
-  return sql<FieldRow>(`${FIELD_SELECT} GROUP BY f.id, fa.id ORDER BY f.id DESC`);
+  return sql<FieldRow>(`${FIELD_SELECT} WHERE f.deleted_at IS NULL GROUP BY f.id, fa.id ORDER BY f.id DESC`);
 }
 
 export async function getField(id: number): Promise<FieldRow | null> {
   const rows = await sql<FieldRow>(
-    `${FIELD_SELECT} WHERE f.id = $1 GROUP BY f.id, fa.id`,
+    `${FIELD_SELECT} WHERE f.id = $1 AND f.deleted_at IS NULL GROUP BY f.id, fa.id`,
     [id]
   );
   return rows[0] ?? null;
@@ -156,7 +172,7 @@ export async function getField(id: number): Promise<FieldRow | null> {
 export async function listVisits(fieldId: number): Promise<Visit[]> {
   return sql<Visit>(
     `SELECT id, field_id, visit_date, note FROM visits
-      WHERE field_id = $1 ORDER BY visit_date DESC, id DESC`,
+      WHERE field_id = $1 AND deleted_at IS NULL ORDER BY visit_date DESC, id DESC`,
     [fieldId]
   );
 }
@@ -164,14 +180,14 @@ export async function listVisits(fieldId: number): Promise<Visit[]> {
 export async function otherFieldsOfFarmer(farmerId: number, exceptFieldId: number) {
   return sql<{ id: number; address: string; crop: string }>(
     `SELECT id, address, crop FROM fields
-      WHERE farmer_id = $1 AND id <> $2 ORDER BY id`,
+      WHERE farmer_id = $1 AND id <> $2 AND deleted_at IS NULL ORDER BY id`,
     [farmerId, exceptFieldId]
   );
 }
 
 export async function listCrops(): Promise<string[]> {
   const rows = await sql<{ crop: string }>(
-    `SELECT DISTINCT crop FROM fields WHERE crop <> ''`
+    `SELECT DISTINCT crop FROM fields WHERE crop <> '' AND deleted_at IS NULL`
   );
   return rows.map((r) => r.crop);
 }
@@ -182,7 +198,7 @@ export async function listRecipes(fieldId: number) {
   return sql<{ id: number; recipe_date: string; method: Recipe["method"]; item_count: number }>(
     `SELECT r.id, r.recipe_date, r.method, COUNT(i.id)::int AS item_count
        FROM recipes r LEFT JOIN recipe_items i ON i.recipe_id = r.id
-      WHERE r.field_id = $1
+      WHERE r.field_id = $1 AND r.deleted_at IS NULL
       GROUP BY r.id ORDER BY r.recipe_date DESC, r.id DESC`,
     [fieldId]
   );
@@ -190,7 +206,7 @@ export async function listRecipes(fieldId: number) {
 
 export async function getRecipe(id: number): Promise<Recipe | null> {
   const rows = await sql<Omit<Recipe, "items">>(
-    `SELECT id, field_id, recipe_date, method, note, area_donum, water_per_donum FROM recipes WHERE id = $1`,
+    `SELECT id, field_id, recipe_date, method, note, area_donum, water_per_donum FROM recipes WHERE id = $1 AND deleted_at IS NULL`,
     [id]
   );
   if (!rows[0]) return null;
@@ -211,4 +227,59 @@ export async function productOptions(): Promise<string[]> {
     if (!seen.has(k)) seen.set(k, p);
   }
   return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, "tr"));
+}
+
+// ---------- Bölge ----------
+
+export async function listRegions(): Promise<string[]> {
+  const rows = await sql<{ region: string }>(
+    `SELECT DISTINCT region FROM fields WHERE region <> '' AND deleted_at IS NULL`
+  );
+  return rows.map((r) => r.region).sort((a, b) => a.localeCompare(b, "tr"));
+}
+
+// ---------- Silinenler ----------
+
+export const TRASH_DAYS = 30;
+
+export type TrashItem = {
+  kind: "tarla" | "ziyaret" | "recete";
+  id: number;
+  field_id: number;
+  full_name: string;
+  detail: string;
+  deleted_at: string;
+};
+
+/** Son 30 günde silinenler (tarlası silinmiş ziyaret/reçeteler tarlayla birlikte geri gelir) */
+export async function listTrash(): Promise<TrashItem[]> {
+  return sql<TrashItem>(
+    `SELECT 'tarla' AS kind, f.id, f.id AS field_id, fa.full_name,
+            concat_ws(' · ', NULLIF(f.crop, ''), NULLIF(f.region, ''), NULLIF(f.address, '')) AS detail,
+            f.deleted_at
+       FROM fields f JOIN farmers fa ON fa.id = f.farmer_id
+      WHERE f.deleted_at IS NOT NULL
+     UNION ALL
+     SELECT 'ziyaret', v.id, f.id, fa.full_name,
+            concat_ws(' · ', to_char(v.visit_date, 'DD.MM.YYYY'), NULLIF(f.crop, ''), NULLIF(v.note, '')),
+            v.deleted_at
+       FROM visits v JOIN fields f ON f.id = v.field_id JOIN farmers fa ON fa.id = f.farmer_id
+      WHERE v.deleted_at IS NOT NULL AND f.deleted_at IS NULL
+     UNION ALL
+     SELECT 'recete', r.id, f.id, fa.full_name,
+            concat_ws(' · ', 'No ' || lpad(r.id::text, 6, '0'), to_char(r.recipe_date, 'DD.MM.YYYY'), NULLIF(f.crop, '')),
+            r.deleted_at
+       FROM recipes r JOIN fields f ON f.id = r.field_id JOIN farmers fa ON fa.id = f.farmer_id
+      WHERE r.deleted_at IS NOT NULL AND f.deleted_at IS NULL
+     ORDER BY deleted_at DESC`
+  );
+}
+
+/** 30 günü geçen silinmiş kayıtları kalıcı olarak temizler. */
+export async function purgeTrash() {
+  const cutoff = `now() - interval '${TRASH_DAYS} days'`;
+  await sql(`DELETE FROM visits  WHERE deleted_at < ${cutoff}`);
+  await sql(`DELETE FROM recipes WHERE deleted_at < ${cutoff}`);
+  await sql(`DELETE FROM fields  WHERE deleted_at < ${cutoff}`);
+  await sql(`DELETE FROM farmers fa WHERE NOT EXISTS (SELECT 1 FROM fields f WHERE f.farmer_id = fa.id)`);
 }

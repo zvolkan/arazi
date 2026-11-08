@@ -10,7 +10,9 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - Liste üç bölüm: **Hiç gidilmeyenler** (kırmızı) → **3 haftayı geçenler** (kırmızı, en eskisi üstte) → **Gidilen ve süresi gelmeyenler**
 - Kırmızı bölümlerde tek dokunuşla **"Bugün gidildi"**; tarla 3 hafta boyunca alt bölüme iner
 - ☆ ile çiftçi **öncelikli** yapılır; her bölümde yıldızlılar en üstte (çiftçinin tüm tarlaları)
-- Ürün filtresi; arama sadece isim ve telefonda
+- Bölge ve ürün filtresi; arama sadece isim ve telefonda
+- **Silinenler:** silinen tarla/ziyaret/reçete 30 gün boyunca geri alınabilir, sonra kalıcı silinir
+- **Yedekler:** her gün otomatik yedek (son 30 gün, veritabanında) + istendiğinde tam yedek Excel'i
 - Detayda geçmiş tarihli ziyaret + not ekleme, ziyaret silme, düzenleme
 - Telefona dokununca arama açılır
 - **Reçete:** Sulama / Yapraktan seçimi, 1.–2.–3. hafta için ürün + miktar + birim + açıklama.
@@ -52,6 +54,9 @@ app/
   tarla/[id]/page.tsx      Tarla detayı + ziyaretler
   tarla/[id]/duzenle/      Düzenleme
   api/disa-aktar/route.ts  Excel dışa aktarma
+  silinenler/              Silinen kayıtlar ve geri alma
+  yedekler/                Otomatik yedekler, tam yedek indirme
+  api/yedek/               Yedek Excel'i
   tarla/[id]/recete/yeni/  Yeni reçete
   recete/[id]/             Reçete görüntüleme, PDF paylaşma, düzenleme
   api/recete/[id]/         Reçete PDF'i
@@ -59,6 +64,7 @@ app/
 components/                Liste, formlar, butonlar
 lib/db.ts                  Veritabanı bağlantısı, şema, sorgular
 lib/format.ts              Tarih, telefon, metin yardımcıları
+lib/backup.ts              Günlük yedek ve yedek Excel'i
 lib/recipe.ts              Reçete türleri, toplam hesabı, ürün önerileri
 lib/pdf/recete.tsx         PDF tasarımı (başlık, adres, telefon burada)
 public/brand/              Logo (beyaz / siyah)

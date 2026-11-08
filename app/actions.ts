@@ -46,6 +46,7 @@ export async function createField(_prev: FormState, fd: FormData): Promise<FormS
   const name = normalizeName(str(fd, "full_name"));
   const phone = str(fd, "phone");
   const address = str(fd, "address");
+  const region = normalizeName(str(fd, "region"));
   const crop = normalizeCrop(str(fd, "crop"));
   const area = parseArea(str(fd, "area_donum"));
   if (!name) return { error: "Çiftçinin adı soyadı gerekli." };
@@ -53,8 +54,8 @@ export async function createField(_prev: FormState, fd: FormData): Promise<FormS
 
   const farmerId = await findOrCreateFarmer(name, phone);
   const rows = await sql<{ id: number }>(
-    `INSERT INTO fields (farmer_id, address, crop, area_donum) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [farmerId, address, crop, area]
+    `INSERT INTO fields (farmer_id, address, crop, area_donum, region) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [farmerId, address, crop, area, region]
   );
   revalidatePath("/");
   redirect(`/tarla/${rows[0].id}?yeni=1`);
@@ -65,14 +66,15 @@ export async function updateField(_prev: FormState, fd: FormData): Promise<FormS
   const name = normalizeName(str(fd, "full_name"));
   const phone = str(fd, "phone");
   const address = str(fd, "address");
+  const region = normalizeName(str(fd, "region"));
   const crop = normalizeCrop(str(fd, "crop"));
   const area = parseArea(str(fd, "area_donum"));
   if (!name) return { error: "Çiftçinin adı soyadı gerekli." };
   if (area === "hata") return { error: "Dönüm sayı olmalı (örn. 4 veya 2,5)." };
 
   const rows = await sql<{ farmer_id: number }>(
-    `UPDATE fields SET address = $2, crop = $3, area_donum = $4 WHERE id = $1 RETURNING farmer_id`,
-    [id, address, crop, area]
+    `UPDATE fields SET address = $2, crop = $3, area_donum = $4, region = $5 WHERE id = $1 AND deleted_at IS NULL RETURNING farmer_id`,
+    [id, address, crop, area, region]
   );
   if (!rows[0]) redirect("/");
   await sql(
@@ -85,19 +87,10 @@ export async function updateField(_prev: FormState, fd: FormData): Promise<FormS
 
 export async function deleteField(fd: FormData) {
   const id = Number(str(fd, "id"));
-  const rows = await sql<{ farmer_id: number }>(
-    `DELETE FROM fields WHERE id = $1 RETURNING farmer_id`,
-    [id]
-  );
-  // Başka tarlası kalmayan çiftçiyi de temizle
-  if (rows[0]) {
-    await sql(
-      `DELETE FROM farmers WHERE id = $1 AND NOT EXISTS (SELECT 1 FROM fields WHERE farmer_id = $1)`,
-      [rows[0].farmer_id]
-    );
-  }
+  // Kalıcı silinmez: 30 gün Silinenler'de durur
+  await sql(`UPDATE fields SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL`, [id]);
   revalidatePath("/");
-  redirect("/");
+  redirect("/?silindi=1");
 }
 
 // ---------- Ziyaret ----------
@@ -108,8 +101,8 @@ export async function markVisitedToday(fieldId: number) {
   await sql(
     `INSERT INTO visits (field_id, visit_date)
      SELECT $1, $2::date
-      WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1)
-        AND NOT EXISTS (SELECT 1 FROM visits WHERE field_id = $1 AND visit_date = $2::date)`,
+      WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1 AND deleted_at IS NULL)
+        AND NOT EXISTS (SELECT 1 FROM visits WHERE field_id = $1 AND visit_date = $2::date AND deleted_at IS NULL)`,
     [fieldId, today]
   );
   revalidatePath("/");
@@ -133,7 +126,7 @@ export async function addVisit(_prev: FormState, fd: FormData): Promise<FormStat
 export async function deleteVisit(fd: FormData) {
   const id = Number(str(fd, "id"));
   const fieldId = Number(str(fd, "field_id"));
-  await sql(`DELETE FROM visits WHERE id = $1`, [id]);
+  await sql(`UPDATE visits SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL`, [id]);
   revalidatePath("/");
   revalidatePath(`/tarla/${fieldId}`);
 }
@@ -199,7 +192,7 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
   let id = r.id;
   if (id) {
     const upd = await sql<{ id: number }>(
-      `UPDATE recipes SET recipe_date = $2, method = $3, note = $4, area_donum = $5, water_per_donum = $6 WHERE id = $1 RETURNING id`,
+      `UPDATE recipes SET recipe_date = $2, method = $3, note = $4, area_donum = $5, water_per_donum = $6 WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
       [id, r.recipe_date, r.method, r.note, r.area_donum, r.water_per_donum]
     );
     if (!upd[0]) return { error: "Reçete bulunamadı." };
@@ -207,7 +200,7 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
   } else {
     const ins = await sql<{ id: number }>(
       `INSERT INTO recipes (field_id, recipe_date, method, note, area_donum, water_per_donum)
-       SELECT $1, $2, $3, $4, $5, $6 WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1)
+       SELECT $1, $2, $3, $4, $5, $6 WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1 AND deleted_at IS NULL)
        RETURNING id`,
       [r.field_id, r.recipe_date, r.method, r.note, r.area_donum, r.water_per_donum]
     );
@@ -232,7 +225,7 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
 export async function deleteRecipe(fd: FormData) {
   const id = Number(str(fd, "id"));
   const rows = await sql<{ field_id: number }>(
-    `DELETE FROM recipes WHERE id = $1 RETURNING field_id`,
+    `UPDATE recipes SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL RETURNING field_id`,
     [id]
   );
   const fieldId = rows[0]?.field_id;
@@ -251,4 +244,19 @@ export async function toggleStar(fieldId: number) {
   );
   revalidatePath("/");
   revalidatePath(`/tarla/${fieldId}`);
+}
+
+// ---------- Silinenler ----------
+
+const TRASH_TABLE = { tarla: "fields", ziyaret: "visits", recete: "recipes" } as const;
+
+export async function restoreItem(fd: FormData) {
+  const kind = str(fd, "kind") as keyof typeof TRASH_TABLE;
+  const id = Number(str(fd, "id"));
+  const table = TRASH_TABLE[kind];
+  if (!table || !Number.isInteger(id)) return;
+  await sql(`UPDATE ${table} SET deleted_at = NULL WHERE id = $1`, [id]);
+  revalidatePath("/");
+  revalidatePath("/silinenler");
+  revalidatePath("/tarla/[id]", "page");
 }

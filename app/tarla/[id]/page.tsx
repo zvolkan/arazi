@@ -51,6 +51,10 @@ export default async function FieldPage({
             {field.phone ? formatPhone(field.phone) : "—"}
           </div>
           <div>
+            <span>Bölge</span>
+            {field.region || "—"}
+          </div>
+          <div>
             <span>Tarla adresi</span>
             <div style={{ whiteSpace: "pre-wrap" }}>{field.address || "—"}</div>
           </div>
@@ -149,7 +153,7 @@ export default async function FieldPage({
         <Link href={`/tarla/${field.id}/duzenle`} className="btn">✎ Düzenle</Link>
         <form action={deleteField} style={{ display: "flex" }}>
           <input type="hidden" name="id" value={field.id} />
-          <ConfirmButton message="Bu tarla ve tüm ziyaret kayıtları silinsin mi? Geri alınamaz." className="btn btn-danger btn-block">
+          <ConfirmButton message="Bu tarla silinsin mi? 30 gün içinde Silinenler'den geri alabilirsiniz." className="btn btn-danger btn-block">
             Tarlayı Sil
           </ConfirmButton>
         </form>

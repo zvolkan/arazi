@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         date: formatDate(recipe.recipe_date),
         farmerName: field.full_name,
         phone: field.phone ? formatPhone(field.phone) : "",
-        address: field.address,
+        address: [field.region, field.address].filter(Boolean).join(" · "),
         crop: field.crop,
         recipe,
       }}

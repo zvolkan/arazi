@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FieldForm } from "@/components/FieldForm";
 import { updateField } from "@/app/actions";
-import { getField, otherFieldsOfFarmer } from "@/lib/db";
+import { getField, listRegions, otherFieldsOfFarmer } from "@/lib/db";
 import { cropOptions } from "@/lib/crops";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +20,7 @@ export default async function EditFieldPage({ params }: { params: Promise<{ id: 
       <FieldForm
         action={updateField}
         crops={await cropOptions()}
+        regions={await listRegions()}
         initial={field}
         sharedFarmerNote={others.length > 0}
         submitLabel="Değişiklikleri Kaydet"

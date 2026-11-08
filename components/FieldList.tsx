@@ -27,11 +27,19 @@ const SECTIONS: { status: Status; title: string; alert: boolean }[] = [
 
 export function FieldList({ fields, today }: { fields: FieldRow[]; today: string }) {
   const [crop, setCrop] = useState("");
+  const [region, setRegion] = useState("");
   const [q, setQ] = useState("");
 
   const crops = useMemo(
     () =>
       Array.from(new Set(fields.map((f) => f.crop).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b, "tr")
+      ),
+    [fields]
+  );
+  const regions = useMemo(
+    () =>
+      Array.from(new Set(fields.map((f) => f.region).filter(Boolean))).sort((a, b) =>
         a.localeCompare(b, "tr")
       ),
     [fields]
@@ -43,6 +51,7 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
     const g: Record<Status, Row[]> = { gidilmedi: [], tekrar: [], gidildi: [] };
     for (const f of fields) {
       if (crop && f.crop !== crop) continue;
+      if (region && f.region !== region) continue;
       if (needle) {
         const textHit = trLower(f.full_name).includes(needle);
         const phoneHit = needleDigits.length >= 3 && f.phone.replace(/\D/g, "").includes(needleDigits);
@@ -58,7 +67,7 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
     g.tekrar.sort((a, b) => star(a, b) || (b.days ?? 0) - (a.days ?? 0)); // en uzun süredir gidilmeyen üstte
     g.gidildi.sort(byName);
     return g;
-  }, [fields, today, crop, q]);
+  }, [fields, today, crop, region, q]);
 
   if (fields.length === 0) {
     return (
@@ -84,7 +93,25 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <select value={crop} onChange={(e) => setCrop(e.target.value)} aria-label="Ürün">
+        {regions.length > 0 && (
+          <select
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            aria-label="Bölge"
+            className={region ? "filter-on" : undefined}
+          >
+            <option value="">Tüm bölgeler</option>
+            {regions.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        )}
+        <select
+          value={crop}
+          onChange={(e) => setCrop(e.target.value)}
+          aria-label="Ürün"
+          className={crop ? "filter-on" : undefined}
+        >
           <option value="">Tüm ürünler</option>
           {crops.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -134,6 +161,7 @@ function Section({
                 <tr>
                   <th>Çiftçi</th>
                   <th>Telefon</th>
+                  <th>Bölge</th>
                   <th>Tarla adresi</th>
                   <th>Ürün</th>
                   <th>Dönüm</th>
@@ -153,6 +181,7 @@ function Section({
                       </span>
                     </td>
                     <td>{f.phone ? <a className="phone" href={telHref(f.phone)}>{formatPhone(f.phone)}</a> : "—"}</td>
+                    <td>{f.region || "—"}</td>
                     <td className="addr">{f.address || "—"}</td>
                     <td>{f.crop ? <span className="crop">{f.crop}</span> : "—"}</td>
                     <td>{f.area_donum ? formatArea(f.area_donum) : "—"}</td>
@@ -182,7 +211,7 @@ function Section({
                 <div className="meta">
                   {f.crop && <span className="crop" style={{ marginRight: 6 }}>{f.crop}</span>}
                   {f.area_donum ? <span className="crop" style={{ marginRight: 6 }}>{formatArea(f.area_donum)} dönüm</span> : null}
-                  {f.address || "Adres girilmemiş"}
+                  {[f.region, f.address].filter(Boolean).join(" · ") || "Adres girilmemiş"}
                 </div>
                 <div className="card-actions">
                   {f.phone && (

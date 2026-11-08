@@ -6,12 +6,21 @@ import type { FormState } from "@/app/actions";
 type Props = {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   crops: string[];
-  initial?: { id: number; full_name: string; phone: string; address: string; crop: string; area_donum: number | null };
+  regions: string[];
+  initial?: {
+    id: number;
+    full_name: string;
+    phone: string;
+    address: string;
+    region: string;
+    crop: string;
+    area_donum: number | null;
+  };
   sharedFarmerNote?: boolean;
   submitLabel: string;
 };
 
-export function FieldForm({ action, crops, initial, sharedFarmerNote, submitLabel }: Props) {
+export function FieldForm({ action, crops, regions, initial, sharedFarmerNote, submitLabel }: Props) {
   const [state, formAction, pending] = useActionState(action, {});
 
   return (
@@ -35,8 +44,18 @@ export function FieldForm({ action, crops, initial, sharedFarmerNote, submitLabe
 
       <h2 style={{ marginTop: 4 }}>Tarla</h2>
       <label className="field">
+        <span>Bölge</span>
+        <input name="region" list="bolgeler" defaultValue={initial?.region} placeholder="İskele, Ören, Bozdoğan…" autoComplete="off" autoCapitalize="words" />
+        <datalist id="bolgeler">
+          {regions.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
+        <small>Listede bölgeye göre süzmek için. Listeden seçin ya da yazın.</small>
+      </label>
+      <label className="field">
         <span>Tarla adresi</span>
-        <textarea name="address" rows={2} defaultValue={initial?.address} placeholder="Köy / mahalle, mevki, tarif…" />
+        <textarea name="address" rows={2} defaultValue={initial?.address} placeholder="Mevki, tarif…" />
       </label>
       <div className="row2">
       <label className="field">
