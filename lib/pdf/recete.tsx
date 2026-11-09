@@ -18,7 +18,7 @@ const LOGO = path.join(process.cwd(), "public/brand/logo-beyaz.png");
 
 export const PDF_BRAND = {
   engineer: "Zir. Müh. D.Ali Bulut",
-  footer: "Yeşilyurt Mah. Kazım Karabekir Cad. No:13/9 Anamur / Mersin  ·  Gsm: 0507 178 16 33",
+  footer: "Yeşilyurt Mh. Akdeniz Cd. No: 20 ALB Tarım Anamur/Mersin  ·  Gsm: 0507 178 16 33",
 };
 
 const C = {
