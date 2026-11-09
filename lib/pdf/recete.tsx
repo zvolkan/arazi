@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { AMOUNT_BASIS, WEEKS, computeTotals, formatAmount, per100L, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
+import { METHODS, WEEKS, computeTotals, formatAmount, per100L, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
 
 // Türkçe karakterler için gömülü yazı tipi
 const fontDir = path.join(process.cwd(), "fonts");
@@ -64,6 +64,15 @@ const s = StyleSheet.create({
   thText: { color: "#fff", fontWeight: 700, fontSize: 8.5, paddingVertical: 4, paddingHorizontal: 8 },
   tr: { flexDirection: "row", borderBottomWidth: 1, borderColor: C.line },
   td: { paddingVertical: 3.5, paddingHorizontal: 8, fontSize: 10 },
+  group: {
+    flexDirection: "row",
+    backgroundColor: C.greenSoft,
+    borderBottomWidth: 1,
+    borderColor: C.line,
+    paddingVertical: 2.5,
+    paddingHorizontal: 8,
+  },
+  groupText: { fontSize: 7.5, fontWeight: 700, color: C.green, letterSpacing: 0.6 },
   footer: { position: "absolute", bottom: 12, left: 24, right: 24, textAlign: "center", fontSize: 7, color: C.muted },
 });
 
@@ -80,11 +89,14 @@ export type RecetePdfData = {
 export function RecetePdf({ d }: { d: RecetePdfData }) {
   const { recipe } = d;
   const hasNotes = recipe.items.some((it) => it.note);
-  const basis = totalsBasis(recipe.method, recipe.area_donum, recipe.water_per_donum);
+  const foliar = recipe.items.some((it) => it.method === "yapraktan");
+  const irrigation = recipe.items.some((it) => it.method === "sulama");
+  const basis = totalsBasis(recipe.area_donum, recipe.water_per_donum, foliar);
   const totals = computeTotals(recipe.items, basis.factor);
-  const per = AMOUNT_BASIS[recipe.method].toLocaleUpperCase("tr-TR");
-  const foliar = recipe.method === "yapraktan";
   const water = waterOrDefault(recipe.water_per_donum);
+  const kindText =
+    foliar && irrigation ? "SULAMA + YAPRAKTAN" : foliar ? "YAPRAKTAN UYGULAMA" : "SULAMA İLE UYGULAMA";
+  const SUB_LABEL = { sulama: "SULAMA İLE", yapraktan: "YAPRAKTAN" } as const;
   // Sütun genişlikleri: Ürün | Dönüme | (100 L suya) | (Açıklama)
   const W = foliar
     ? hasNotes
@@ -128,8 +140,10 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
             </View>
           </View>
 
-          <Text style={s.method}>{recipe.method === "sulama" ? "SULAMA İLE UYGULAMA" : "YAPRAKTAN UYGULAMA"}
-            {foliar ? `  ·  DÖNÜME ${formatAmount(water)} L SU` : ""}</Text>
+          <Text style={s.method}>
+            {kindText}
+            {foliar ? `  ·  YAPRAKTAN: DÖNÜME ${formatAmount(water)} L SU` : ""}
+          </Text>
 
           {WEEKS.map((w) => {
             const items = recipe.items.filter((it) => it.week === w);
@@ -138,24 +152,35 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
               <View key={w} style={s.week} wrap={false}>
                 <View style={s.th}>
                   <Text style={[s.thText, { width: W.p }]}>{w}. HAFTA</Text>
-                  <Text style={[s.thText, { width: W.a, textAlign: alignAmt }]}>{per}</Text>
+                  <Text style={[s.thText, { width: W.a, textAlign: alignAmt }]}>DÖNÜME</Text>
                   {foliar && <Text style={[s.thText, { width: W.c, textAlign: alignAmt }]}>100 L SUYA</Text>}
                   {hasNotes && <Text style={[s.thText, { width: W.n }]}>AÇIKLAMA</Text>}
                 </View>
-                {items.map((it, i) => (
-                  <View key={i} style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }]}>
-                    <Text style={[s.td, { width: W.p, fontWeight: 600 }]}>{it.product}</Text>
-                    <Text style={[s.td, { width: W.a, textAlign: alignAmt }]}>
-                      {formatAmount(it.amount)} {it.unit}
-                    </Text>
-                    {foliar && (
-                      <Text style={[s.td, { width: W.c, textAlign: alignAmt }]}>
-                        {formatAmount(per100L(it.amount, water) ?? 0)} {it.unit}
-                      </Text>
-                    )}
-                    {hasNotes && <Text style={[s.td, { width: W.n, fontSize: 9.5 }]}>{it.note}</Text>}
-                  </View>
-                ))}
+                {METHODS.map((m) => {
+                  const list = items.filter((it) => it.method === m);
+                  if (list.length === 0) return null;
+                  return (
+                    <View key={m}>
+                      <View style={s.group}>
+                        <Text style={s.groupText}>{SUB_LABEL[m]}</Text>
+                      </View>
+                      {list.map((it, i) => (
+                        <View key={i} style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }]}>
+                          <Text style={[s.td, { width: W.p, fontWeight: 600 }]}>{it.product}</Text>
+                          <Text style={[s.td, { width: W.a, textAlign: alignAmt }]}>
+                            {formatAmount(it.amount)} {it.unit}
+                          </Text>
+                          {foliar && (
+                            <Text style={[s.td, { width: W.c, textAlign: alignAmt }]}>
+                              {m === "yapraktan" ? `${formatAmount(per100L(it.amount, water) ?? 0)} ${it.unit}` : "—"}
+                            </Text>
+                          )}
+                          {hasNotes && <Text style={[s.td, { width: W.n, fontSize: 9.5 }]}>{it.note}</Text>}
+                        </View>
+                      ))}
+                    </View>
+                  );
+                })}
               </View>
             );
           })}
@@ -170,7 +195,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
           {totals.length > 0 && (
             <View style={{ marginTop: 8, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }} wrap={false}>
               <View style={{ backgroundColor: C.green, paddingVertical: 4, paddingHorizontal: 8 }}>
-                <Text style={{ color: "#fff", fontWeight: 700, fontSize: 8.5 }}>TOPLAM ÜRÜN MİKTARLARI  ·  3 HAFTA  ·  {basis.label.toLocaleUpperCase("tr-TR")}</Text>
+                <Text style={{ color: "#fff", fontWeight: 700, fontSize: 8.5 }}>TOPLAM ÜRÜN MİKTARLARI  ·  3 HAFTA  ·  {basis.areaLabel.toLocaleUpperCase("tr-TR")}</Text>
               </View>
               <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                 {totals.map((t, i) => (

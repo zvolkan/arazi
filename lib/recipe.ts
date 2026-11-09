@@ -2,10 +2,27 @@
 
 export type Method = "sulama" | "yapraktan";
 
+export const METHODS: Method[] = ["sulama", "yapraktan"];
+
 export const METHOD_LABEL: Record<Method, string> = {
   sulama: "Sulama",
   yapraktan: "Yapraktan",
 };
+
+/** Reçetenin genel türü: içindeki ürünlere göre */
+export type RecipeKind = Method | "karma";
+
+export const KIND_LABEL: Record<RecipeKind, string> = {
+  sulama: "Sulama",
+  yapraktan: "Yapraktan",
+  karma: "Sulama + Yapraktan",
+};
+
+export function recipeKind(items: Pick<RecipeItem, "method">[]): RecipeKind {
+  const s = new Set(items.map((i) => i.method));
+  if (s.size > 1) return "karma";
+  return s.has("yapraktan") ? "yapraktan" : "sulama";
+}
 
 export const UNITS = ["L", "ml", "kg", "g"] as const;
 export type Unit = (typeof UNITS)[number];
@@ -14,6 +31,8 @@ export const WEEKS = [1, 2, 3] as const;
 
 export type RecipeItem = {
   week: number;
+  /** Bu ürün sulamayla mı yapraktan mı verilecek */
+  method: Method;
   product: string;
   amount: number;
   unit: Unit;
@@ -24,7 +43,7 @@ export type Recipe = {
   id: number;
   field_id: number;
   recipe_date: string;
-  method: Method;
+  method: RecipeKind;
   note: string;
   /** Reçete yazıldığı andaki dönüm (miktarlar dönüme göre girilir) */
   area_donum: number | null;
@@ -86,12 +105,6 @@ export const DEFAULT_PRODUCTS = [
   "Fulactiv",
 ];
 
-/** Miktarlar her iki uygulamada da dönüme girilir */
-export const AMOUNT_BASIS: Record<Method, string> = {
-  sulama: "dönüme",
-  yapraktan: "dönüme",
-};
-
 /**
  * Yapraktan: dönüme doz, dönüme verilen suda çözülür.
  * Depoda karıştırma oranı = doz × 100 / dönüme su  (100 L suya düşen miktar)
@@ -110,26 +123,23 @@ export function per100L(amountPerDonum: number, waterPerDonum: number | null): n
 }
 
 export type Basis = {
-  /** Dönüm/100 L başına miktarlar bununla çarpılınca toplam çıkar */
+  /** Dönüme girilen miktarlar bununla çarpılınca toplam çıkar */
   factor: number;
-  /** "4 dönüm" · "4 dönüm · 200 L su" */
-  label: string;
+  /** "4 dönüm" */
+  areaLabel: string;
+  /** Yapraktan varsa bir uygulamada kullanılacak toplam su: "400 L" */
+  waterLabel?: string;
   /** Eksik bilgi varsa uyarı */
   warning?: string;
 };
 
-export function totalsBasis(method: Method, area: number | null, water: number | null): Basis {
-  const a = area && area > 0 ? area : null;
-  if (method === "sulama") {
-    if (!a) return { factor: 1, label: "1 dönüm", warning: "Dönüm girilmediği için toplam 1 dönüme göre." };
-    return { factor: a, label: `${formatAmount(a)} dönüm` };
-  }
-  // yapraktan: ürün toplamı yine dönümle çarpılır; su ayrıca hesaplanır (girilmezse dönüme 100 L)
-  const w = waterOrDefault(water);
-  const area1 = a ?? 1;
+/** Miktarlar her iki uygulamada da dönüme girilir; toplam = miktar × dönüm. */
+export function totalsBasis(area: number | null, water: number | null, hasFoliar: boolean): Basis {
+  const a = area && area > 0 ? area : 1;
   return {
-    factor: area1,
-    label: `${formatAmount(area1)} dönüm · ${formatAmount(w * area1)} L su`,
-    warning: a ? undefined : "Dönüm girilmediği için toplam 1 dönüme göre.",
+    factor: a,
+    areaLabel: `${formatAmount(a)} dönüm`,
+    waterLabel: hasFoliar ? `${formatAmount(waterOrDefault(water) * a)} L` : undefined,
+    warning: area && area > 0 ? undefined : "Dönüm girilmediği için toplam 1 dönüme göre.",
   };
 }

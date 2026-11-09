@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getField, getRecipe } from "@/lib/db";
 import { formatDate } from "@/lib/format";
-import { AMOUNT_BASIS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, per100L, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
+import { KIND_LABEL, METHODS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, per100L, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -35,7 +35,9 @@ export default async function RecipePage({
   if (!field) notFound();
 
   const no = recipeNo(recipe.id);
-  const basis = totalsBasis(recipe.method, recipe.area_donum, recipe.water_per_donum);
+  const hasFoliar = recipe.items.some((it) => it.method === "yapraktan");
+  const water = waterOrDefault(recipe.water_per_donum);
+  const basis = totalsBasis(recipe.area_donum, recipe.water_per_donum, hasFoliar);
   const totals = computeTotals(recipe.items, basis.factor);
   const pdfUrl = `/api/recete/${recipe.id}`;
 
@@ -52,7 +54,7 @@ export default async function RecipePage({
               {formatDate(recipe.recipe_date)} · {field.full_name}{field.crop ? ` · ${field.crop}` : ""}
             </p>
           </div>
-          <span className="badge badge-yes">{METHOD_LABEL[recipe.method]}</span>
+          <span className="badge badge-yes">{KIND_LABEL[recipe.method] ?? recipe.method}</span>
         </div>
 
         <div style={{ marginTop: 16 }}>
@@ -65,8 +67,11 @@ export default async function RecipePage({
       </div>
 
       <div className="panel totals">
-        <h2>Toplam ihtiyaç · {basis.label}</h2>
-        <p className="totals-hint">PDF'in en altında da yer alır.</p>
+        <h2>Toplam ihtiyaç · {basis.areaLabel}</h2>
+        <p className="totals-hint">
+          PDF'in en altında da yer alır.
+          {basis.waterLabel && <> Yapraktan: dönüme {formatAmount(water)} L su, her uygulamada <b>{basis.waterLabel}</b>.</>}
+        </p>
         {basis.warning && <p className="alert alert-error" style={{ margin: "0 0 10px" }}>{basis.warning}</p>}
         <ul className="totals-list">
           {totals.map((t) => (
@@ -82,28 +87,37 @@ export default async function RecipePage({
         const items = recipe.items.filter((it) => it.week === w);
         return (
           <div className="panel" key={w}>
-            <h2>{w}. Hafta <span className="basis-tag">({AMOUNT_BASIS[recipe.method]})</span></h2>
+            <h2>{w}. Hafta <span className="basis-tag">(dönüme)</span></h2>
             {items.length === 0 ? (
               <p style={{ color: "var(--muted)", margin: 0 }}>Bu hafta için ürün yok.</p>
             ) : (
-              <ul className="totals-list">
-                {items.map((it, i) => (
-                  <li key={i}>
-                    <span>
-                      {it.product}
-                      {it.note && <span className="rx-item-note">{it.note}</span>}
-                    </span>
-                    <b style={{ textAlign: "right" }}>
-                      {formatAmount(it.amount)} {it.unit}
-                      {recipe.method === "yapraktan" && per100L(it.amount, waterOrDefault(recipe.water_per_donum)) != null && (
-                        <span className="rx-item-note">
-                          100 L suya {formatAmount(per100L(it.amount, waterOrDefault(recipe.water_per_donum))!)} {it.unit}
-                        </span>
-                      )}
-                    </b>
-                  </li>
-                ))}
-              </ul>
+              METHODS.map((m) => {
+                const list = items.filter((it) => it.method === m);
+                if (list.length === 0) return null;
+                return (
+                  <div key={m}>
+                    <div className="rx-sub">{m === "sulama" ? "💧" : "🍃"} {METHOD_LABEL[m]}</div>
+                    <ul className="totals-list">
+                      {list.map((it, i) => (
+                        <li key={i}>
+                          <span>
+                            {it.product}
+                            {it.note && <span className="rx-item-note">{it.note}</span>}
+                          </span>
+                          <b style={{ textAlign: "right" }}>
+                            {formatAmount(it.amount)} {it.unit}
+                            {m === "yapraktan" && (
+                              <span className="rx-item-note">
+                                100 L suya {formatAmount(per100L(it.amount, water) ?? 0)} {it.unit}
+                              </span>
+                            )}
+                          </b>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })
             )}
           </div>
         );

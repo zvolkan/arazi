@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getField, listRecipes, listVisits, otherFieldsOfFarmer } from "@/lib/db";
-import { METHOD_LABEL, recipeNo } from "@/lib/recipe";
+import { KIND_LABEL, recipeNo, type RecipeKind } from "@/lib/recipe";
 import { formatDate, formatPhone, telHref, todayISO } from "@/lib/format";
 import { deleteField, deleteVisit } from "@/app/actions";
 import { StatusBadge } from "@/components/FieldList";
@@ -93,7 +93,7 @@ export default async function FieldPage({
               <li key={r.id}>
                 <Link href={`/recete/${r.id}`} style={{ textDecoration: "none", flex: 1 }}>
                   <div className="date">No {recipeNo(r.id)} · {formatDate(r.recipe_date)}</div>
-                  <div className="note">{METHOD_LABEL[r.method]} · {r.item_count} ürün</div>
+                  <div className="note">{KIND_LABEL[r.method as RecipeKind] ?? r.method} · {r.item_count} ürün</div>
                 </Link>
                 <span aria-hidden style={{ alignSelf: "center" }}>›</span>
               </li>

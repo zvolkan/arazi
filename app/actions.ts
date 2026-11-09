@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { productOptions, sql } from "@/lib/db";
 import { normalizeCrop, normalizeName, phoneKey, todayISO } from "@/lib/format";
-import { UNITS, waterOrDefault, type Method, type RecipeItem } from "@/lib/recipe";
+import { UNITS, recipeKind, waterOrDefault, type RecipeItem, type RecipeKind } from "@/lib/recipe";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -137,7 +137,7 @@ type RecipePayload = {
   id?: number;
   field_id: number;
   recipe_date: string;
-  method: Method;
+  method: RecipeKind;
   note: string;
   area_donum: number | null;
   water_per_donum: number | null;
@@ -147,10 +147,10 @@ type RecipePayload = {
 function cleanRecipe(raw: unknown): RecipePayload | string {
   const r = raw as Partial<RecipePayload>;
   if (!r || typeof r !== "object") return "Geçersiz veri.";
-  if (r.method !== "sulama" && r.method !== "yapraktan") return "Sulama veya Yapraktan seçin.";
   const items = (Array.isArray(r.items) ? r.items : [])
     .map((it) => ({
       week: Number(it.week),
+      method: it.method,
       product: String(it.product ?? "").trim().replace(/\s+/g, " "),
       amount: Number(it.amount),
       unit: it.unit,
@@ -159,18 +159,21 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     .filter((it) => it.product);
   for (const it of items) {
     if (![1, 2, 3].includes(it.week)) return "Geçersiz hafta.";
+    if (it.method !== "sulama" && it.method !== "yapraktan") return "Geçersiz uygulama şekli.";
     if (!(it.amount > 0)) return `"${it.product}" için miktar girin.`;
     if (!UNITS.includes(it.unit as (typeof UNITS)[number])) return "Geçersiz birim.";
   }
   if (items.length === 0) return "En az bir ürün girin.";
+  const kind = recipeKind(items as RecipeItem[]);
+  const hasFoliar = items.some((it) => it.method === "yapraktan");
   return {
     id: r.id ? Number(r.id) : undefined,
     field_id: Number(r.field_id),
     recipe_date: validDate(String(r.recipe_date ?? "")),
-    method: r.method,
+    method: kind,
     note: String(r.note ?? "").trim(),
     area_donum: Number(r.area_donum) > 0 ? Number(r.area_donum) : null,
-    water_per_donum: r.method === "yapraktan" ? waterOrDefault(Number(r.water_per_donum)) : null,
+    water_per_donum: hasFoliar ? waterOrDefault(Number(r.water_per_donum)) : null,
     items: items as RecipeItem[],
   };
 }
@@ -210,12 +213,12 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
 
   const values: unknown[] = [];
   const tuples = r.items.map((it, i) => {
-    values.push(id, it.week, i, it.product, it.amount, it.unit, it.note);
-    const b = i * 7;
-    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7})`;
+    values.push(id, it.week, i, it.product, it.amount, it.unit, it.note, it.method);
+    const b = i * 8;
+    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
   });
   await sql(
-    `INSERT INTO recipe_items (recipe_id, week, position, product, amount, unit, note) VALUES ${tuples.join(", ")}`,
+    `INSERT INTO recipe_items (recipe_id, week, position, product, amount, unit, note, method) VALUES ${tuples.join(", ")}`,
     values
   );
   revalidatePath(`/tarla/${r.field_id}`);

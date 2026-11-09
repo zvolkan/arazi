@@ -89,6 +89,11 @@ ALTER TABLE recipes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 -- Bölge
 ALTER TABLE fields ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';
 
+-- Sulama ve yapraktan aynı reçetede: uygulama şekli ürün satırında
+ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS method TEXT;
+UPDATE recipe_items i SET method = r.method FROM recipes r
+ WHERE i.recipe_id = r.id AND i.method IS NULL AND r.method IN ('sulama', 'yapraktan');
+
 -- Günlük otomatik yedekler (tüm tabloların kopyası)
 CREATE TABLE IF NOT EXISTS backups (
   id         SERIAL PRIMARY KEY,
@@ -211,8 +216,9 @@ export async function getRecipe(id: number): Promise<Recipe | null> {
   );
   if (!rows[0]) return null;
   const items = await sql<RecipeItem>(
-    `SELECT week, product, amount, unit, note FROM recipe_items
-      WHERE recipe_id = $1 ORDER BY week, position, id`,
+    `SELECT week, COALESCE(method, 'sulama') AS method, product, amount, unit, note FROM recipe_items
+      WHERE recipe_id = $1
+      ORDER BY week, CASE WHEN method = 'yapraktan' THEN 1 ELSE 0 END, position, id`,
     [id]
   );
   return { ...rows[0], items };

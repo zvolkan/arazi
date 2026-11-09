@@ -15,12 +15,13 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - **Yedekler:** her gün otomatik yedek (son 30 gün, veritabanında) + istendiğinde tam yedek Excel'i
 - Detayda geçmiş tarihli ziyaret + not ekleme, ziyaret silme, düzenleme
 - Telefona dokununca arama açılır
-- **Reçete:** Sulama / Yapraktan seçimi, 1.–2.–3. hafta için ürün + miktar + birim + açıklama.
-  Tarlanın **dönüm** bilgisi kayıtlıdır; miktarlar her iki uygulamada da **dönüme** girilir.
+- **Reçete:** sulama ve yapraktan aynı reçetede — her haftada 💧 Sulama ve 🍃 Yapraktan bölümleri,
+  her satırda ürün + miktar (dönüme) + birim + açıklama.
+  Tarlanın **dönüm** bilgisi kayıtlıdır; toplamlar dönümle çarpılır (aynı ürün iki bölümde varsa toplamda birleşir).
   - Sulama: toplam = dönüme miktar × dönüm (örn. Cloud 2+2+3 L × 4 dönüm = 28 Litre)
   - Yapraktan: mühendis **dönüme kaç litre su** verileceğini belirler (boş bırakılırsa 100 L). Toplam ürün = dönüme miktar × dönüm,
     toplam su = dönüme su × dönüm, depoda karıştırma oranı **100 L suya = dönüme miktar × 100 ÷ dönüme su**
-  - Toplamlar ekranda ve PDF'in en altında gösterilir; yapraktan PDF'inde ayrıca "100 L suya" sütunu vardır.
+  - Toplamlar ekranda ve PDF'in en altında gösterilir; yapraktan ürün varsa PDF'te ayrıca "100 L suya" sütunu vardır.
 - Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
 - Şirket içi kullanım için girişsiz; arama motorlarında listelenmez

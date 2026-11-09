@@ -194,7 +194,7 @@ export async function backupWorkbook(data: BackupData, takenAt: Date | string): 
       date: formatDate(r.recipe_date),
       name: farmerOf(r.field_id).full_name,
       crop: f.crop,
-      method: METHOD_LABEL[r.method as Method] ?? r.method,
+      method: METHOD_LABEL[(it.method ?? r.method) as Method] ?? it.method ?? r.method,
       area: r.area_donum ?? "",
       water: r.water_per_donum ?? "",
       week: it.week,
