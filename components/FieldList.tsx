@@ -94,19 +94,22 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        {regions.length > 0 && (
-          <select
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            aria-label="Bölge"
-            className={region ? "filter-on" : undefined}
-          >
-            <option value="">Tüm bölgeler</option>
-            {regions.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
-        )}
+        <select
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          aria-label="Bölge"
+          className={region ? "filter-on" : undefined}
+        >
+          <option value="">Tüm bölgeler</option>
+          {regions.length === 0 && (
+            <option value="" disabled>
+              Henüz bölge girilmemiş — tarlayı düzenleyip ekleyin
+            </option>
+          )}
+          {regions.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
         <select
           value={crop}
           onChange={(e) => setCrop(e.target.value)}
@@ -219,7 +222,8 @@ function Section({
                 <div className="meta">
                   {f.crop && <span className="crop" style={{ marginRight: 6 }}>{f.crop}</span>}
                   {f.area_donum ? <span className="crop" style={{ marginRight: 6 }}>{formatArea(f.area_donum)} dönüm</span> : null}
-                  {[f.region, f.address].filter(Boolean).join(" · ") || "Adres girilmemiş"}
+                  {f.region && <span className="crop crop-region" style={{ marginRight: 6 }}>📍 {f.region}</span>}
+                  {f.address || (f.region ? "" : "Adres girilmemiş")}
                 </div>
                 <div className="card-actions">
                   {f.phone && (
