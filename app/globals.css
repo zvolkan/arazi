@@ -445,3 +445,9 @@ a.phone:hover { text-decoration: underline; }
   border: 0; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 18px; line-height: 1; cursor: pointer;
 }
 .photo-add { cursor: pointer; }
+
+.visit-photos { margin-top: 6px; }
+.photo-cell a { display: block; width: 100%; height: 100%; }
+.photo-loading { background: #e4e7e1; }
+.photo-link { display: inline-block; margin-top: 6px; font-size: 14px; color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; }
+.visit-list li > div:first-child { flex: 1; min-width: 0; }

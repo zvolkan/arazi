@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { addVisit } from "@/app/actions";
-import { compressPhoto } from "@/lib/image";
+import { uploadPhoto } from "@/lib/upload";
 
 type Photo = { key: number; preview: string; id?: number; error?: string };
 let k = 1;
@@ -22,16 +22,8 @@ export function VisitForm({ fieldId, today }: { fieldId: number; today: string }
       const preview = URL.createObjectURL(file);
       setPhotos((ps) => [...ps, { key, preview }]);
       try {
-        const c = await compressPhoto(file);
-        const fd = new FormData();
-        fd.append("full", c.full, "foto.jpg");
-        fd.append("thumb", c.thumb, "kucuk.jpg");
-        fd.append("width", String(c.width));
-        fd.append("height", String(c.height));
-        const res = await fetch("/api/foto", { method: "POST", body: fd });
-        const json = await res.json();
-        if (!res.ok || !json.id) throw new Error(json.error || "Yüklenemedi");
-        setPhotos((ps) => ps.map((p) => (p.key === key ? { ...p, id: json.id } : p)));
+        const id = await uploadPhoto(file);
+        setPhotos((ps) => ps.map((p) => (p.key === key ? { ...p, id } : p)));
       } catch (e) {
         setPhotos((ps) => ps.map((p) => (p.key === key ? { ...p, error: (e as Error).message } : p)));
       }

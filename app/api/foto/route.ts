@@ -22,9 +22,15 @@ export async function POST(req: Request) {
   }
   const w = Number(fd.get("width")) || null;
   const h = Number(fd.get("height")) || null;
+  // Var olan ziyarete ekleme: ziyaret silinmemiş olmalı
+  const visitId = Number(fd.get("visit_id")) || null;
+  if (visitId) {
+    const ok = await sql(`SELECT 1 FROM visits WHERE id = $1 AND deleted_at IS NULL`, [visitId]);
+    if (!ok.length) return Response.json({ error: "Ziyaret bulunamadı" }, { status: 404 });
+  }
   const rows = await sql<{ id: number }>(
-    `INSERT INTO visit_photos (data, thumb, width, height) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [fullBuf, thumbBuf, w, h]
+    `INSERT INTO visit_photos (data, thumb, width, height, visit_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [fullBuf, thumbBuf, w, h, visitId]
   );
   return Response.json({ id: rows[0].id });
 }

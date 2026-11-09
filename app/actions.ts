@@ -365,3 +365,10 @@ export async function saveRecipeAsTemplate(recipeId: number, name: string): Prom
   revalidatePath("/receteler");
   return { id: rows[0].id };
 }
+
+// ---------- Fotoğraf ----------
+
+export async function deletePhoto(photoId: number, fieldId: number) {
+  await sql(`DELETE FROM visit_photos WHERE id = $1`, [photoId]);
+  revalidatePath(`/tarla/${fieldId}`);
+}
