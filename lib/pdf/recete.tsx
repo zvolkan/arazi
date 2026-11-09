@@ -31,19 +31,26 @@ const C = {
   zebra: "#f7f8f5",
 };
 
+const HEADER_H = 64;
+
 const s = StyleSheet.create({
-  page: { fontFamily: "Inter", fontSize: 11, color: C.text, paddingBottom: 44 },
+  // Başlık her sayfada tekrarlanır; içerik başlığın altından başlar
+  page: { fontFamily: "Inter", fontSize: 11, color: C.text, paddingTop: HEADER_H + 12, paddingBottom: 44 },
   band: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HEADER_H,
     backgroundColor: C.green,
     paddingHorizontal: 34,
-    paddingVertical: 11,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   engineer: { color: "#fff", fontSize: 17, fontWeight: 700, textAlign: "right" },
   sub: { color: "#dfeadc", fontSize: 10, textAlign: "right", marginTop: 4 },
-  body: { paddingHorizontal: 34, paddingTop: 12 },
+  body: { paddingHorizontal: 34 },
   info: { flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: C.line, borderRadius: 4, marginBottom: 10 },
   cell: { width: "50%", paddingVertical: 4.5, paddingHorizontal: 10 },
   label: { fontSize: 8.5, color: C.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 },
@@ -110,7 +117,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
       <Page size="A4" style={s.page}>
-        <View style={s.band}>
+        <View style={s.band} fixed>
           <Image src={LOGO} style={{ height: 42, objectFit: "contain" }} />
           <View>
             <Text style={s.engineer}>{PDF_BRAND.engineer}</Text>
@@ -224,7 +231,13 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
 
         </View>
 
-        <Text style={s.footer} fixed>{PDF_BRAND.footer}</Text>
+        <Text
+          style={s.footer}
+          fixed
+          render={({ pageNumber, totalPages }) =>
+            totalPages > 1 ? `${PDF_BRAND.footer}  ·  Sayfa ${pageNumber}/${totalPages}` : PDF_BRAND.footer
+          }
+        />
       </Page>
     </Document>
   );
