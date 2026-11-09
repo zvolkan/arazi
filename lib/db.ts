@@ -381,3 +381,16 @@ export async function getPhoto(id: number, kind: "data" | "thumb") {
   );
   return rows[0]?.img ?? null;
 }
+
+// ---------- Çiftçiler ----------
+
+export type FarmerOption = { id: number; full_name: string; phone: string; field_count: number };
+
+/** Yeni kayıtta öneri için kayıtlı çiftçiler (en az bir tarlası olanlar) */
+export async function listFarmers(): Promise<FarmerOption[]> {
+  return sql<FarmerOption>(
+    `SELECT fa.id, fa.full_name, fa.phone, COUNT(f.id)::int AS field_count
+       FROM farmers fa JOIN fields f ON f.farmer_id = fa.id AND f.deleted_at IS NULL
+      GROUP BY fa.id ORDER BY fa.full_name`
+  );
+}

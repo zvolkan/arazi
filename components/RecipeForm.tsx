@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
-import { saveRecipe, saveTemplate } from "@/app/actions";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { saveRecipe, saveTemplate, type FormState } from "@/app/actions";
+import { OFFLINE_MSG, clearDraft, draftTime, isNetworkError, loadDraft, saveDraft } from "@/lib/draft";
 import {
   KIND_LABEL,
   METHODS,
@@ -64,10 +65,28 @@ type Props =
       initial?: RecipeTemplate;
     };
 
+type DraftData = { date: string; area: string; water: string; note: string; name: string; weeks: Week[] };
+
 export function RecipeForm(props: Props) {
   const isTemplate = props.mode === "template";
   const initialItems = props.initial?.items;
-  const [state, formAction, pending] = useActionState(isTemplate ? saveTemplate : saveRecipe, {});
+  const serverAction = isTemplate ? saveTemplate : saveRecipe;
+  // İnternet yoksa kaydetme denemesi taslağı korur ve uyarı verir
+  const [state, formAction, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
+    if (!navigator.onLine) return { error: OFFLINE_MSG };
+    try {
+      return await serverAction(prev, fd);
+    } catch (e) {
+      if (isNetworkError(e)) return { error: OFFLINE_MSG };
+      throw e;
+    }
+  }, {});
+  const draftKey = isTemplate
+    ? `sablon:${props.initial?.id ?? "yeni"}`
+    : props.initial
+      ? `recete:${props.initial.id}`
+      : `recete:yeni:${props.fieldId}`;
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
 
   // Reçeteye özel alanlar
   const recipeInit = !isTemplate ? (props.initial as Recipe | undefined) : undefined;
@@ -81,6 +100,26 @@ export function RecipeForm(props: Props) {
   const [note, setNote] = useState(props.initial?.note ?? "");
   const [weeks, setWeeks] = useState<Week[]>(() => weeksFrom(initialItems));
   const [usedTemplate, setUsedTemplate] = useState("");
+
+  // Açılışta kaydedilmemiş taslak varsa geri yükle
+  const ready = useRef(false);
+  useEffect(() => {
+    const d = loadDraft<DraftData>(draftKey);
+    if (d) {
+      setDate(d.data.date || date);
+      setArea(d.data.area ?? "");
+      setWater(d.data.water ?? "");
+      setNote(d.data.note ?? "");
+      setName(d.data.name ?? "");
+      setWeeks(d.data.weeks.map((wk) => ({
+        sulama: wk.sulama.map((r) => ({ ...r, key: nextKey++ })),
+        yapraktan: wk.yapraktan.map((r) => ({ ...r, key: nextKey++ })),
+      })));
+      setRestoredAt(d.savedAt);
+    }
+    ready.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
 
   const update = (w: number, m: Method, fn: (rows: Row[]) => Row[]) =>
     setWeeks((ws) => ws.map((wk, i) => (i === w ? { ...wk, [m]: fn(wk[m]) } : wk)));
@@ -157,12 +196,40 @@ export function RecipeForm(props: Props) {
         }
   );
 
+  // Her değişiklikte taslağı telefonda sakla
+  const firstSave = useRef(true);
+  useEffect(() => {
+    if (!ready.current) return;
+    if (firstSave.current) {
+      firstSave.current = false;
+      return;
+    }
+    const t = setTimeout(() => saveDraft<DraftData>(draftKey, { date, area, water, note, name, weeks }), 400);
+    return () => clearTimeout(t);
+  }, [draftKey, date, area, water, note, name, weeks]);
+
   const templates = !isTemplate ? (props.templates ?? []) : [];
   const blocked = items.length === 0 || (isTemplate && !name.trim());
 
   return (
     <form action={formAction}>
       <input type="hidden" name="payload" value={payload} />
+      {restoredAt && (
+        <div className="alert alert-draft">
+          📝 Kaydedilmemiş taslak geri yüklendi ({draftTime(restoredAt)}).{" "}
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              if (!confirm("Taslak silinip boş forma dönülsün mü?")) return;
+              clearDraft(draftKey);
+              location.reload();
+            }}
+          >
+            Taslağı sil
+          </button>
+        </div>
+      )}
       {state.error && <div className="alert alert-error">{state.error}</div>}
 
       {!isTemplate && !recipeInit && (
@@ -331,6 +398,7 @@ export function RecipeForm(props: Props) {
         </div>
       )}
 
+      {state.error && <div className="alert alert-error">{state.error}</div>}
       <button type="submit" className="btn btn-primary btn-block" disabled={pending || blocked}>
         {pending
           ? "Kaydediliyor…"

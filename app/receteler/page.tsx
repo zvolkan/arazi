@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/format";
 import { KIND_LABEL, recipeKind, recipeNo } from "@/lib/recipe";
 import { deleteTemplate } from "@/app/actions";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { ClearDraft } from "@/components/ClearDraft";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
       <Link href="/" className="back">← Listeye dön</Link>
       <h1 className="page-title">Reçeteler</h1>
       {sp.sablon && <div className="alert alert-ok">Şablon kaydedildi.</div>}
+      {sp.sablon && <ClearDraft keys={["sablon:*"]} />}
 
       <div className="panel">
         <div className="week-head">

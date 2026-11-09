@@ -15,7 +15,14 @@ export function SharePdfButton({ url, fileName }: { url: string; fileName: strin
     fetch(url)
       .then((r) => (r.ok ? r.blob() : Promise.reject()))
       .then((b) => alive && setFile(new File([b], fileName, { type: "application/pdf" })))
-      .catch(() => alive && setMsg("PDF hazırlanamadı, sayfayı yenileyin."));
+      .catch(() =>
+        alive &&
+        setMsg(
+          navigator.onLine
+            ? "PDF hazırlanamadı, sayfayı yenileyin."
+            : "İnternet yok. Bağlantı gelince sayfayı yenileyip gönderin."
+        )
+      );
     return () => {
       alive = false;
     };

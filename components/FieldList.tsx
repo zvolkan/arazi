@@ -262,7 +262,15 @@ function VisitTodayButton({ id, status }: { id: number; status: Status }) {
       type="button"
       className="btn btn-sm btn-primary"
       disabled={pending}
-      onClick={() => start(() => markVisitedToday(id))}
+      onClick={() =>
+        start(async () => {
+          try {
+            await markVisitedToday(id);
+          } catch {
+            alert("İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.");
+          }
+        })
+      }
       title={`Bugünün tarihiyle ziyaret kaydeder. ${REVISIT_DAYS} gün sonra tekrar listenin üstüne çıkar.`}
     >
       {pending ? "Kaydediliyor…" : "✓ Bugün gidildi"}

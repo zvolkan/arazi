@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/FieldList";
 import { StarButton } from "@/components/StarButton";
 import { VisitForm } from "@/components/VisitForm";
 import { VisitPhotos } from "@/components/VisitPhotos";
+import { ClearDraft } from "@/components/ClearDraft";
 import { ConfirmButton } from "@/components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ export default async function FieldPage({
 
       {sp.yeni && <div className="alert alert-ok">Kayıt eklendi.</div>}
       {sp.kaydedildi && <div className="alert alert-ok">Ziyaret kaydedildi.</div>}
+      {sp.kaydedildi && <ClearDraft keys={[`ziyaret:${field.id}`]} />}
 
       <div className="panel">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
@@ -78,7 +80,7 @@ export default async function FieldPage({
 
       <div className="panel">
         <h2>Ziyaret Ekle</h2>
-        <VisitForm fieldId={field.id} today={todayISO()} />
+        <VisitForm key={visits.length} fieldId={field.id} today={todayISO()} />
       </div>
 
       <div className="panel">
@@ -152,6 +154,7 @@ export default async function FieldPage({
       )}
 
       <div className="actions-row">
+        <Link href={`/yeni?ciftci=${field.farmer_id}`} className="btn">+ Bu çiftçiye tarla ekle</Link>
         <Link href={`/tarla/${field.id}/duzenle`} className="btn">✎ Düzenle</Link>
         <form action={deleteField} style={{ display: "flex" }}>
           <input type="hidden" name="id" value={field.id} />

@@ -4,6 +4,7 @@ import { listFields } from "@/lib/db";
 import { FieldList } from "@/components/FieldList";
 import { todayISO } from "@/lib/format";
 import { maybeDailySnapshot } from "@/lib/backup";
+import { WarmOffline } from "@/components/OfflineSupport";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
         </div>
       )}
       <FieldList fields={fields} today={todayISO()} />
+      <WarmOffline fieldIds={fields.map((f) => f.id)} />
       <nav className="footer-links">
         <Link href="/silinenler">🗑 Silinenler</Link>
         <Link href="/yedekler">💾 Yedekler</Link>

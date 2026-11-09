@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { OfflineSupport } from "@/components/OfflineSupport";
 
 export const metadata: Metadata = {
   title: "Arazi Takip Sistemi",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </div>
         </header>
+        <OfflineSupport />
         <main className="container">{children}</main>
       </body>
     </html>

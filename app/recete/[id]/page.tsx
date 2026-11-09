@@ -8,6 +8,7 @@ import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { SaveAsTemplateButton } from "@/components/SaveAsTemplateButton";
+import { ClearDraft } from "@/components/ClearDraft";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function RecipePage({
     <div className="narrow">
       <Link href={`/tarla/${field.id}`} className="back">← {field.full_name}</Link>
       {sp.kaydedildi && <div className="alert alert-ok">Reçete kaydedildi.</div>}
+      {sp.kaydedildi && <ClearDraft keys={[`recete:yeni:${field.id}`, `recete:${recipe.id}`]} />}
 
       <div className="panel">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>

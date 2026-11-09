@@ -51,7 +51,14 @@ export function VisitPhotos({ visitId, fieldId, photoIds }: { visitId: number; f
                 onClick={() => {
                   if (!confirm("Bu fotoğraf silinsin mi?")) return;
                   setRemoved((r) => [...r, pid]);
-                  start(() => deletePhoto(pid, fieldId));
+                  start(async () => {
+                    try {
+                      await deletePhoto(pid, fieldId);
+                    } catch {
+                      setRemoved((r) => r.filter((x) => x !== pid));
+                      alert("İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.");
+                    }
+                  });
                 }}
               >
                 ×

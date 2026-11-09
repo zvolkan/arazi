@@ -52,7 +52,14 @@ export async function createField(_prev: FormState, fd: FormData): Promise<FormS
   if (!name) return { error: "Çiftçinin adı soyadı gerekli." };
   if (area === "hata") return { error: "Dönüm sayı olmalı (örn. 4 veya 2,5)." };
 
-  const farmerId = await findOrCreateFarmer(name, phone);
+  // Formda kayıtlı bir çiftçi seçildiyse tarla ona eklenir
+  const chosen = Number(str(fd, "farmer_id")) || 0;
+  let farmerId = 0;
+  if (chosen) {
+    const found = await sql<{ id: number }>(`SELECT id FROM farmers WHERE id = $1`, [chosen]);
+    farmerId = found[0]?.id ?? 0;
+  }
+  if (!farmerId) farmerId = await findOrCreateFarmer(name, phone);
   const rows = await sql<{ id: number }>(
     `INSERT INTO fields (farmer_id, address, crop, area_donum, region) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
     [farmerId, address, crop, area, region]

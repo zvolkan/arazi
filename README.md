@@ -30,6 +30,14 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - Yeni reçete kaydedilince o tarihte ziyaret yoksa **ziyaret otomatik eklenir** ("Reçete No … yazıldı")
 - **Ziyarette fotoğraf:** telefonda küçültülüp (~200 KB) veritabanına kaydedilir; ziyaret geçmişinde küçük resim, dokununca büyük hali.
   Fotoğraflar günlük yedeğe dahil değildir.
+- **Yeni kayıtta çiftçi önerisi:** isim yazarken kayıtlı benzer çiftçiler (telefon, tarla sayısı) listelenir; aynı kişiyse seçilir ve
+  tarla ona eklenir, değilse yazmaya devam edilir (engellemez). Tarla sayfasında **"+ Bu çiftçiye tarla ekle"**.
+- **İnternetsiz kullanım:**
+  - Reçete, şablon ve ziyaret formları yazarken telefonda **taslak** olarak saklanır; internet yokken Kaydet'e basılırsa
+    uyarı verilir, bağlantı gelince tekrar basılır. Başarılı kayıttan sonra taslak silinir.
+  - Service worker (`public/sw.js`): açılan sayfalar ve uygulama dosyaları telefonda saklanır; ana sayfa açılınca tüm tarla
+    ve reçete ekranları arka planda hazırlanır (6 saatte bir). İnternet yokken liste, tarla sayfaları ve reçete ekranı açılır,
+    altta "İnternet yok" bandı görünür. PDF/WhatsApp ve kayıt için internet gerekir.
 - Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
 - Şirket içi kullanım için girişsiz; arama motorlarında listelenmez

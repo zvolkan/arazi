@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
-import { addVisit } from "@/app/actions";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { addVisit, type FormState } from "@/app/actions";
+import { OFFLINE_MSG, clearDraft, isNetworkError, loadDraft, saveDraft } from "@/lib/draft";
 import { uploadPhoto } from "@/lib/upload";
 
 type Photo = { key: number; preview: string; id?: number; error?: string };
@@ -9,7 +10,34 @@ let k = 1;
 const MAX_PHOTOS = 10;
 
 export function VisitForm({ fieldId, today }: { fieldId: number; today: string }) {
-  const [state, formAction, pending] = useActionState(addVisit, {});
+  const [state, formAction, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
+    if (!navigator.onLine) return { error: OFFLINE_MSG };
+    try {
+      return await addVisit(prev, fd);
+    } catch (e) {
+      if (isNetworkError(e)) return { error: OFFLINE_MSG };
+      throw e;
+    }
+  }, {});
+  // Tarih ve not telefonda taslak olarak saklanır
+  const draftKey = `ziyaret:${fieldId}`;
+  const [date, setDate] = useState(today);
+  const [note, setNote] = useState("");
+  const loaded = useRef(false);
+  useEffect(() => {
+    // Kayıt yeni yapıldıysa taslak artık gereksiz
+    if (new URLSearchParams(location.search).has("kaydedildi")) clearDraft(draftKey);
+    const d = loadDraft<{ date: string; note: string }>(draftKey);
+    if (d) {
+      setDate(d.data.date || today);
+      setNote(d.data.note || "");
+    }
+    loaded.current = true;
+  }, [draftKey, today]);
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (note.trim()) saveDraft(draftKey, { date, note });
+  }, [draftKey, date, note]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const uploading = photos.some((p) => !p.id && !p.error);
@@ -40,11 +68,11 @@ export function VisitForm({ fieldId, today }: { fieldId: number; today: string }
       <input type="hidden" name="photo_ids" value={JSON.stringify(ids)} />
       <label className="field">
         <span>Ziyaret tarihi</span>
-        <input type="date" name="visit_date" defaultValue={today} max={today} required />
+        <input type="date" name="visit_date" value={date} onChange={(e) => setDate(e.target.value)} max={today} required />
       </label>
       <label className="field">
         <span>Not</span>
-        <textarea name="note" rows={3} placeholder="Ne görüldü, ne önerildi…" />
+        <textarea name="note" rows={3} placeholder="Ne görüldü, ne önerildi…" value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
 
       <div className="field">

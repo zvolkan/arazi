@@ -26,7 +26,11 @@ export function StarButton({
         e.preventDefault();
         start(async () => {
           setOn(!on);
-          await toggleStar(fieldId);
+          try {
+            await toggleStar(fieldId);
+          } catch {
+            alert("İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.");
+          }
         });
       }}
     >
