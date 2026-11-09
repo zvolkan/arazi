@@ -226,7 +226,6 @@ function Section({
                     <a className="btn btn-sm" href={telHref(f.phone)}>📞 Ara</a>
                   )}
                   <VisitTodayButton id={f.id} status={f.status} />
-                  <Link className="btn btn-sm" href={`/tarla/${f.id}`}>Detay</Link>
                 </div>
               </div>
             ))}
