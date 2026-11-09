@@ -95,15 +95,6 @@ export function computeTotals(
   return Array.from(map.values()).sort((a, b) => a.product.localeCompare(b.product, "tr"));
 }
 
-/** Öneri listesindeki başlangıç ürünleri; kullanılan ürünler zamanla eklenir. */
-export const DEFAULT_PRODUCTS = [
-  "Bayokim Baroute",
-  "Bayokim Phoska",
-  "Bayokim Potassio",
-  "Bayokim Tracer 6-30-0+ME",
-  "Cloud",
-  "Fulactiv",
-];
 
 /**
  * Yapraktan: dönüme doz, dönüme verilen suda çözülür.

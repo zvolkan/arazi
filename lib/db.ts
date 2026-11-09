@@ -1,5 +1,6 @@
 import { Pool, types } from "pg";
-import { DEFAULT_PRODUCTS, type Recipe, type RecipeItem } from "./recipe";
+import { type Recipe, type RecipeItem } from "./recipe";
+import { CATALOG } from "./catalog";
 
 // DATE kolonlarını JS Date yerine "YYYY-MM-DD" metni olarak al (saat dilimi kaymasını önler)
 types.setTypeParser(1082, (v) => v);
@@ -224,11 +225,11 @@ export async function getRecipe(id: number): Promise<Recipe | null> {
   return { ...rows[0], items };
 }
 
-/** Ürün önerileri: varsayılanlar + daha önce reçetede yazılmış ürünler */
+/** Ürün önerileri: ürün listesi (GTS) + daha önce reçetede yazılmış ürünler */
 export async function productOptions(): Promise<string[]> {
   const rows = await sql<{ product: string }>(`SELECT DISTINCT product FROM recipe_items`);
   const seen = new Map<string, string>();
-  for (const p of [...DEFAULT_PRODUCTS, ...rows.map((r) => r.product)]) {
+  for (const p of [...CATALOG.map((c) => c.name), ...rows.map((r) => r.product)]) {
     const k = p.toLocaleLowerCase("tr-TR");
     if (!seen.has(k)) seen.set(k, p);
   }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getField, getRecipe } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { KIND_LABEL, METHODS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, per100L, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
+import { formatPacks, packCounts } from "@/lib/catalog";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -74,12 +75,18 @@ export default async function RecipePage({
         </p>
         {basis.warning && <p className="alert alert-error" style={{ margin: "0 0 10px" }}>{basis.warning}</p>}
         <ul className="totals-list">
-          {totals.map((t) => (
-            <li key={`${t.product}|${t.unit}`}>
-              <span>{t.product}</span>
-              <b>{formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}</b>
-            </li>
-          ))}
+          {totals.map((t) => {
+            const packs = packCounts(t.product, t.amount, t.unit);
+            return (
+              <li key={`${t.product}|${t.unit}`}>
+                <span>{t.product}</span>
+                <b style={{ textAlign: "right" }}>
+                  {formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}
+                  {packs.length > 0 && <span className="pack-line">{formatPacks(packs)}</span>}
+                </b>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

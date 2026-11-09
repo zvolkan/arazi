@@ -18,6 +18,8 @@ import {
   type Recipe,
   type Unit,
 } from "@/lib/recipe";
+import { findProduct, sameDimension, packCounts, formatPacks } from "@/lib/catalog";
+import { ProductInput } from "@/components/ProductInput";
 
 type Row = { key: number; product: string; amount: string; unit: Unit; note: string };
 /** Bir hafta: sulama ve yapraktan satırları ayrı */
@@ -71,6 +73,12 @@ export function RecipeForm({
     setWeeks((ws) => ws.map((wk, i) => (i === w ? { ...wk, [m]: fn(wk[m]) } : wk)));
   const setRow = (w: number, m: Method, key: number, patch: Partial<Row>) =>
     update(w, m, (rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  /** Ürün değişince: listedeki ürünse birimi uygun hale getir (Lt ürün → L, Kg ürün → kg) */
+  const setProduct = (w: number, m: Method, r: Row, product: string) => {
+    const p = findProduct(product);
+    const unit = p && !sameDimension(p.unit, r.unit) ? p.unit : r.unit;
+    setRow(w, m, r.key, { product, unit });
+  };
   const addRow = (w: number, m: Method) =>
     update(w, m, (rows) => [...rows, emptyRow(rows.at(-1)?.unit ?? (m === "yapraktan" ? "ml" : "L"))]);
   const removeRow = (w: number, m: Method, key: number) => update(w, m, (rows) => rows.filter((r) => r.key !== key));
@@ -157,12 +165,6 @@ export function RecipeForm({
         </p>
       </div>
 
-      <datalist id="urun-listesi">
-        {products.map((p) => (
-          <option key={p} value={p} />
-        ))}
-      </datalist>
-
       {weeks.map((wk, w) => (
         <div className="panel" key={w}>
           <div className="week-head">
@@ -182,13 +184,11 @@ export function RecipeForm({
               </div>
               {wk[m].map((r) => (
                 <div className="rx-row" key={r.key}>
-                  <input
+                  <ProductInput
                     className="rx-product"
-                    list="urun-listesi"
-                    placeholder="Ürün"
                     value={r.product}
-                    onChange={(e) => setRow(w, m, r.key, { product: e.target.value })}
-                    autoComplete="off"
+                    onChange={(v) => setProduct(w, m, r, v)}
+                    extra={products}
                   />
                   <input
                     className="rx-amount"
@@ -252,12 +252,20 @@ export function RecipeForm({
           <p style={{ color: "var(--muted)", margin: 0 }}>Ürün girdikçe burada toplanır.</p>
         ) : (
           <ul className="totals-list">
-            {totals.map((t) => (
-              <li key={`${t.product}|${t.unit}`}>
-                <span>{t.product}</span>
-                <b>{formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}</b>
-              </li>
-            ))}
+            {totals.map((t) => {
+              const packs = packCounts(t.product, t.amount, t.unit);
+              return (
+                <li key={`${t.product}|${t.unit}`}>
+                  <span>{t.product}</span>
+                  <b style={{ textAlign: "right" }}>
+                    {formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}
+                    {packs.length > 0 && (
+                      <span className="pack-line">{formatPacks(packs)}</span>
+                    )}
+                  </b>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

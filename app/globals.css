@@ -389,3 +389,26 @@ a.phone:hover { text-decoration: underline; }
 .card-link, .row-link { cursor: pointer; }
 .card-link:active { transform: scale(0.995); background: #fafaf7; }
 .card-alert.card-link:active { background: #fff3f2; }
+
+/* ---------- Ürün arama ---------- */
+.pi { position: relative; }
+.pi input.pi-known { border-color: #9cc39f; }
+.pi-list {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 300px;
+  overflow-y: auto;
+}
+.pi-list li { padding: 11px 10px; border-radius: 8px; cursor: pointer; font-size: 15px; }
+.pi-list li.on, .pi-list li:hover { background: var(--accent-soft); }
+.pack-line { display: block; font-weight: 600; font-size: 13px; color: var(--accent); margin-top: 2px; }

@@ -22,6 +22,9 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
   - Yapraktan: mühendis **dönüme kaç litre su** verileceğini belirler (boş bırakılırsa 100 L). Toplam ürün = dönüme miktar × dönüm,
     toplam su = dönüme su × dönüm, depoda karıştırma oranı **100 L suya = dönüme miktar × 100 ÷ dönüme su**
   - Toplamlar ekranda ve PDF'in en altında gösterilir; yapraktan ürün varsa PDF'te ayrıca "100 L suya" sütunu vardır.
+- **Ürün listesi (GTS):** reçetede ürün yazarken arama listesi çıkar (içinde geçen harflerle, "clo" → Bayokim Cloud);
+  seçilen ürünün birimi kendiliğinden gelir; toplamda **kaç paket** alınacağı yazar (en az artanı veren birleşim,
+  örn. 12 kg Tracer → 1 × 8 kg + 1 × 4 kg kova)
 - Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
 - Şirket içi kullanım için girişsiz; arama motorlarında listelenmez
@@ -66,6 +69,7 @@ components/                Liste, formlar, butonlar
 lib/db.ts                  Veritabanı bağlantısı, şema, sorgular
 lib/format.ts              Tarih, telefon, metin yardımcıları
 lib/backup.ts              Günlük yedek ve yedek Excel'i
+lib/catalog.ts             Ürün listesi araması ve paket hesabı (lib/urunler.json)
 lib/recipe.ts              Reçete türleri, toplam hesabı, ürün önerileri
 lib/pdf/recete.tsx         PDF tasarımı (başlık, adres, telefon burada)
 public/brand/              Logo (beyaz / siyah)
@@ -75,6 +79,8 @@ fonts/                     PDF yazı tipi (Inter, OFL lisanslı)
 ## Ayarlar
 
 - Hatırlatma süresi: `lib/format.ts` → `REVISIT_DAYS` (varsayılan 21 gün)
+- Ürün listesini güncellemek: GTS'den stok Excel'i alın, `python scripts/gts-urun-listesi.py GTS.xlsx`
+  çalıştırın → `lib/urunler.json` yenilenir
 - PDF'teki mühendis adı ve alt bilgi: `lib/pdf/recete.tsx` → `PDF_BRAND`
 - Başlangıç ürün önerileri: `lib/recipe.ts` → `DEFAULT_PRODUCTS` (yazılan ürünler otomatik eklenir)
 

@@ -1,0 +1,1174 @@
+[
+ {
+  "name": "ALEXIN K",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "AlgaCell",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "ALPHA ROSSİ",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "AMINOSEC",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "Antgen Champion 5-0-25+(15SO3)",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "Asfertglobal BALOO",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "ASPLANT 11-40-11+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "ASPLANT 20-20-20+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "ASPLANT 8-10-41+(2 MgO)+(11 SO3)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "ATLANTICELL TRICHOMIX",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "B'NAT ALON",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim 25-5-5+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "kova"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim BAROUTE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim CalM",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim Cloud 7-7-7 +ME",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim PHOSKA 0-15-20",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim Potassio 9-0-20",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim Stamin",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "Bayokim Tracer 6-30-0+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 4.0,
+    "type": "kova"
+   },
+   {
+    "size": 8.0,
+    "type": "kova"
+   }
+  ]
+ },
+ {
+  "name": "BAZA HUMUS SC",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "BAZADRIP 10-5-38+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BAZADRIP 15-30-15+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BAZADRIP 18-18-18+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BAZADRIP 20-20-20+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BAZAMICRO MIX",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BAZAMICRO ZBM",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 0.25,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BİOSOL",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "Bor A Zn",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "Brentax KCa 4-0-15+ (15 CaO)+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BroGlobal 19-34-6",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BROMAX 16-5-0+(5 MgO)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   },
+   {
+    "size": 2.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "BroMoZn",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 0.4,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "Bropolly",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "CLASSFERT CALSO",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "CLASSFERT COMBİ",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "kova"
+   }
+  ]
+ },
+ {
+  "name": "CLASSFERT MAGNE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "CRISSOL 20-20-20+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "CRUCERO",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   },
+   {
+    "size": 5.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "ECKOSIL",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "ENERMAX 0-25-32+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 0.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "EURO SLOW N 21",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "EVER TIME IRON",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 5.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "FERTIACTYL GZ 13-0-5",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "bidon"
+   },
+   {
+    "size": 5.0,
+    "type": "bidon"
+   },
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "FERTIGONIA 16-8-24+(2 MgO)+(12.5 SO3)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "FITOMARE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "FLASH LINE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "FOLICAT CALCIUM",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "FOLISOL P 3-30-0",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "FORAL BMo",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "FRUITFERT 12-0-5",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 0.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "FULACTIV",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "GLUCONEX",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "GROWWAY 10-0-20+(15 CaO)",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "Growway VEGAMIN",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "HAIFA BITTERMAG MAGNESIUM SULPHATE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "HAIFA CAL GG",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "Haifa MAG Magnesium Nitrate",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "HAIFA MICRO Cu - EDTA",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "HaifaStim Booster",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 3.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "HaifaStim Vital",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "HARVEST MORE 10-55-10+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "HARVEST MORE 5-10-27+(5.5CaO)+(2.5MgO)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "HUMUS POWDER",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "kova"
+   }
+  ]
+ },
+ {
+  "name": "KAOUA OLEO",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "KELKAT IRON EDDHA",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 5.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "KELKAT MAGIC MIX",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 5.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "KIPLANT ESSENCE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "KIPLANT MT-22",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "KOBECU",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   },
+   {
+    "size": 5.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "KOBESİL",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "Kobestar 3-20-0 +(4 MgO)+ME",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "bidon"
+   },
+   {
+    "size": 5.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "KOBETAM 10-15-40",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "KOBETAM 27-9-18",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "KSC I PHYTACTYL 14-40-5+(13 SO3)+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "KSC III PHYTACTYL 15-5-35+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "KSC PHYTACTYL IV POLKA 0-32-40 + (11 S03) + ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "KSC PHYTACTYL VI 14-12-14+(35 SO3)+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 15.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "Lebosol®- Robustus",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "Lebosol®-Cupronova",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "Master Comp 8-21-0",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "MASTER COMP HUMIDOL",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "Mycoshell Tabs",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "kova"
+   }
+  ]
+ },
+ {
+  "name": "NOVAZOT Immun",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "OLIGOMAX AQUA 11-6-23+(9CaO)+(2MgO)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "OLIGOMAX AQUA 13-40-13+(2MgO)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "OLIGOMAX AQUA 19-19-19+2MgO+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "OLIGOMAX AQUA 6-16-36+(3 MgO)+(15.6 SO3)+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 2.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "PENERGETIC BODEN",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 2.5,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "PENERGETİC Pflanzen",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 2.5,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "PEP NİTROGENO",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "PERLHUMUS",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "PHD BENJAMIN",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "PHD FERTY LOVE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "PHYSIOH",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 10.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "POWHUMUS NK",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "PRO ACTIVE MAX",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "RİCHARD 0-35-35+ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 0.5,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "ROUTEFERT 11-9-0",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 0.25,
+    "type": "kova"
+   },
+   {
+    "size": 0.5,
+    "type": "kova"
+   }
+  ]
+ },
+ {
+  "name": "Solquel Zinc",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "SOLUCAT 10-52-10+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "SOLUCAT 11-40-11+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "SOLUCAT 16-8-24+TE",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "torba"
+   }
+  ]
+ },
+ {
+  "name": "SPARKIN",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "STARMAX FRUCTI 3-18-0+(3 CaO)+ (2 MgO)+TE",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "STIMPHOS Zn 0-29-5+Zn",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "Thio-Sul",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "TIMACTIVE INRIZZA+",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 40.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "TIMAVIA 3-15-0+ME",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "bidon"
+   }
+  ]
+ },
+ {
+  "name": "TİMAGROW 5-15-25 MPPA DUO",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 40.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "TİMAZOT DRİP N",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "TURN ON",
+  "unit": "L",
+  "packs": [
+   {
+    "size": 1.0,
+    "type": "şişe"
+   }
+  ]
+ },
+ {
+  "name": "Wings NPK 15-30-15 + ME",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "WİNGS 10-0-46",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 25.0,
+    "type": "çuval"
+   }
+  ]
+ },
+ {
+  "name": "YESCAL 0,3",
+  "unit": "kg",
+  "packs": [
+   {
+    "size": 20.0,
+    "type": "torba"
+   }
+  ]
+ }
+]
