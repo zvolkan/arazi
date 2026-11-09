@@ -19,9 +19,9 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
   her satırda ürün + miktar (dönüme) + birim + açıklama.
   Tarlanın **dönüm** bilgisi kayıtlıdır; toplamlar dönümle çarpılır (aynı ürün iki bölümde varsa toplamda birleşir).
   - Sulama: toplam = dönüme miktar × dönüm (örn. Cloud 2+2+3 L × 4 dönüm = 28 Litre)
-  - Yapraktan: mühendis **dönüme kaç litre su** verileceğini belirler (boş bırakılırsa 100 L). Toplam ürün = dönüme miktar × dönüm,
-    toplam su = dönüme su × dönüm, depoda karıştırma oranı **100 L suya = dönüme miktar × 100 ÷ dönüme su**
-  - Toplamlar ekranda ve PDF'in en altında gösterilir; yapraktan ürün varsa PDF'te ayrıca "100 L suya" sütunu vardır.
+  - Yapraktan: miktar yine **dönüme** girilir; mühendis dönüme kaç litre su verileceğini yazar (boşsa 150 L).
+    Toplam ürün = dönüme miktar × dönüm, toplam su = dönüme su × dönüm
+  - Toplamlar ekranda ve PDF'in en altında gösterilir.
 - **Ürün listesi (GTS):** reçetede ürün yazarken arama listesi çıkar (içinde geçen harflerle, "clo" → Bayokim Cloud);
   seçilen ürünün birimi kendiliğinden gelir; toplamda **kaç paket** alınacağı yazar (en az artanı veren birleşim,
   örn. 12 kg Tracer → 1 × 8 kg + 1 × 4 kg kova)

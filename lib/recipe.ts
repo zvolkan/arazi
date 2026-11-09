@@ -64,8 +64,11 @@ export function formatAmount(n: number): string {
 
 /** "2,5" / "2.5" → 2.5 ; geçersizse NaN */
 export function parseAmount(s: string): number {
-  const t = s.trim().replace(",", ".");
+  // Türkçe yazım: "2,5" → 2.5 · "2.5" → 2.5 · "2.000" → 2000 · "1.500,5" → 1500.5 · "0.250" → 0.25
+  let t = s.trim().replace(/\s/g, "");
   if (!t) return NaN;
+  if (/^[1-9]\d{0,2}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, "").replace(",", ".");
+  else t = t.replace(",", ".");
   return Number(t);
 }
 
@@ -96,22 +99,14 @@ export function computeTotals(
 }
 
 
-/**
- * Yapraktan: dönüme doz, dönüme verilen suda çözülür.
- * Depoda karıştırma oranı = doz × 100 / dönüme su  (100 L suya düşen miktar)
- */
 /** Yapraktanda dönüme su girilmezse kullanılan değer (L) */
-export const DEFAULT_WATER_PER_DONUM = 100;
+export const DEFAULT_WATER_PER_DONUM = 150;
 
 /** Yapraktan için geçerli dönüme su: girilmediyse 100 L */
 export function waterOrDefault(water: number | null | undefined): number {
   return water && water > 0 ? water : DEFAULT_WATER_PER_DONUM;
 }
 
-export function per100L(amountPerDonum: number, waterPerDonum: number | null): number | null {
-  if (!waterPerDonum || waterPerDonum <= 0 || !(amountPerDonum > 0)) return null;
-  return (amountPerDonum * 100) / waterPerDonum;
-}
 
 export type Basis = {
   /** Dönüme girilen miktarlar bununla çarpılınca toplam çıkar */

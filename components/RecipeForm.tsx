@@ -9,7 +9,6 @@ import {
   WEEKS,
   computeTotals,
   totalsBasis,
-  per100L,
   waterOrDefault,
   DEFAULT_WATER_PER_DONUM,
   formatAmount,
@@ -45,7 +44,8 @@ export function RecipeForm({
 }) {
   const [state, formAction, pending] = useActionState(saveRecipe, {});
   const [date, setDate] = useState(initial?.recipe_date ?? today);
-  const numStr = (n: number | null | undefined) => (n != null ? formatAmount(n) : "");
+  const numStr = (n: number | null | undefined) =>
+    n != null ? n.toLocaleString("tr-TR", { useGrouping: false, maximumFractionDigits: 2 }) : "";
   const [area, setArea] = useState(numStr(initial ? initial.area_donum : fieldArea));
   const [water, setWater] = useState(numStr(initial?.water_per_donum ?? DEFAULT_WATER_PER_DONUM));
   const waterEff = waterOrDefault(parseAmount(water) || null);
@@ -58,7 +58,7 @@ export function RecipeForm({
           .map((it) => ({
             key: nextKey++,
             product: it.product,
-            amount: formatAmount(it.amount),
+            amount: numStr(it.amount),
             unit: it.unit,
             note: it.note ?? "",
           }));
@@ -157,7 +157,7 @@ export function RecipeForm({
               onChange={(e) => setWater(e.target.value.replace(/[^\d.,]/g, ""))}
               placeholder={String(DEFAULT_WATER_PER_DONUM)}
             />
-            <small>Boş bırakılırsa {DEFAULT_WATER_PER_DONUM} L kabul edilir. 100 L suya düşen miktar otomatik hesaplanır.</small>
+            <small>Boş bırakılırsa {DEFAULT_WATER_PER_DONUM} L kabul edilir.</small>
           </label>
         )}
         <p className="basis-hint">
@@ -217,13 +217,6 @@ export function RecipeForm({
                     onChange={(e) => setRow(w, m, r.key, { note: e.target.value })}
                     autoComplete="off"
                   />
-                  {m === "yapraktan" &&
-                    (() => {
-                      const c = per100L(parseAmount(r.amount), waterEff);
-                      return c != null ? (
-                        <div className="rx-calc">100 L suya: <b>{formatAmount(c)} {r.unit}</b></div>
-                      ) : null;
-                    })()}
                 </div>
               ))}
               <button type="button" className="btn btn-sm rx-add" onClick={() => addRow(w, m)}>

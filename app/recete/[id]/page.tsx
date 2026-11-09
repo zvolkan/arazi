@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getField, getRecipe } from "@/lib/db";
 import { formatDate } from "@/lib/format";
-import { KIND_LABEL, METHODS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, per100L, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
+import { KIND_LABEL, METHODS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
 import { formatPacks, packCounts } from "@/lib/catalog";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
@@ -113,11 +113,6 @@ export default async function RecipePage({
                           </span>
                           <b style={{ textAlign: "right" }}>
                             {formatAmount(it.amount)} {it.unit}
-                            {m === "yapraktan" && (
-                              <span className="rx-item-note">
-                                100 L suya {formatAmount(per100L(it.amount, water) ?? 0)} {it.unit}
-                              </span>
-                            )}
                           </b>
                         </li>
                       ))}

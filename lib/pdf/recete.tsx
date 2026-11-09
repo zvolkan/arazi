@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { METHODS, WEEKS, computeTotals, formatAmount, per100L, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
+import { METHODS, WEEKS, computeTotals, formatAmount, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
 import { formatPacks, packCounts } from "@/lib/catalog";
 
 // Türkçe karakterler için gömülü yazı tipi
@@ -105,14 +105,8 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   const kindText =
     foliar && irrigation ? "SULAMA + YAPRAKTAN" : foliar ? "YAPRAKTAN UYGULAMA" : "SULAMA İLE UYGULAMA";
   const SUB_LABEL = { sulama: "SULAMA İLE", yapraktan: "YAPRAKTAN" } as const;
-  // Sütun genişlikleri: Ürün | Dönüme | (100 L suya) | (Açıklama)
-  const W = foliar
-    ? hasNotes
-      ? { p: "38%", a: "13%", c: "15%", n: "34%" }
-      : { p: "56%", a: "22%", c: "22%", n: "0%" }
-    : hasNotes
-      ? { p: "42%", a: "18%", c: "0%", n: "40%" }
-      : { p: "70%", a: "30%", c: "0%", n: "0%" };
+  // Sütunlar: Ürün | Dönüme | (Açıklama)
+  const W = hasNotes ? { p: "42%", a: "18%", n: "40%" } : { p: "70%", a: "30%", n: "0%" };
   const alignAmt = hasNotes ? "left" : "right";
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
@@ -161,7 +155,6 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
                 <View style={s.th}>
                   <Text style={[s.thText, { width: W.p }]}>{w}. HAFTA</Text>
                   <Text style={[s.thText, { width: W.a, textAlign: alignAmt }]}>DÖNÜME</Text>
-                  {foliar && <Text style={[s.thText, { width: W.c, textAlign: alignAmt }]}>100 L SUYA</Text>}
                   {hasNotes && <Text style={[s.thText, { width: W.n }]}>AÇIKLAMA</Text>}
                 </View>
                 {METHODS.map((m) => {
@@ -178,11 +171,6 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
                           <Text style={[s.td, { width: W.a, textAlign: alignAmt }]}>
                             {formatAmount(it.amount)} {it.unit}
                           </Text>
-                          {foliar && (
-                            <Text style={[s.td, { width: W.c, textAlign: alignAmt }]}>
-                              {m === "yapraktan" ? `${formatAmount(per100L(it.amount, water) ?? 0)} ${it.unit}` : "—"}
-                            </Text>
-                          )}
                           {hasNotes && <Text style={[s.td, { width: W.n, fontSize: 10 }]}>{it.note}</Text>}
                         </View>
                       ))}
