@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import type { FieldRow } from "@/lib/db";
 import {
@@ -143,6 +144,13 @@ function Section({
   today: string;
 }) {
   const hot = alert && rows.length > 0;
+  const router = useRouter();
+  // Kartın/satırın boş yerine dokununca tarla sayfası açılır; butonlar ve bağlantılar kendi işini yapar
+  const open = (e: React.MouseEvent, id: number) => {
+    if ((e.target as HTMLElement).closest("a, button, input, select")) return;
+    if (window.getSelection()?.toString()) return; // metin seçiliyorsa açma
+    router.push(`/tarla/${id}`);
+  };
   return (
     <section className="section">
       <h2 className={`section-title${hot ? " section-title-alert" : ""}`}>
@@ -173,7 +181,7 @@ function Section({
               </thead>
               <tbody>
                 {rows.map((f) => (
-                  <tr key={f.id} className={alert ? "row-alert" : undefined}>
+                  <tr key={f.id} className={`row-link${alert ? " row-alert" : ""}`} onClick={(e) => open(e, f.id)}>
                     <td>
                       <span className="name-cell">
                         <StarButton fieldId={f.id} starred={f.starred} />
@@ -200,7 +208,7 @@ function Section({
           {/* Telefon: kartlar */}
           <div className="cards">
             {rows.map((f) => (
-              <div className={`card${alert ? " card-alert" : ""}`} key={f.id}>
+              <div className={`card card-link${alert ? " card-alert" : ""}`} key={f.id} onClick={(e) => open(e, f.id)}>
                 <div className="card-head">
                   <span className="name-cell">
                     <StarButton fieldId={f.id} starred={f.starred} />

@@ -384,3 +384,8 @@ a.phone:hover { text-decoration: underline; }
 .rx-block .rx-row input, .rx-block .rx-row select, .rx-block .rx-del { background: #fff; }
 .rx-add { background: transparent; }
 .rx-sub { font-size: 14px; font-weight: 700; color: var(--muted); margin: 6px 0 2px; }
+
+/* Kart ve tablo satırı tıklanabilir */
+.card-link, .row-link { cursor: pointer; }
+.card-link:active { transform: scale(0.995); background: #fafaf7; }
+.card-alert.card-link:active { background: #fff3f2; }
