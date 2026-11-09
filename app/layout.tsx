@@ -24,9 +24,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="topbar-inner">
             <Link href="/" className="brand">
               <img src="/brand/logo-beyaz.png" alt="Bayırlıoğlu" className="brand-logo" />
-              Arazi Takip
+              <span className="brand-text">Arazi Takip</span>
             </Link>
-            <Link href="/yeni" className="btn btn-light btn-sm">+ Yeni Kayıt</Link>
+            <nav className="top-actions">
+              <Link href="/receteler" className="btn btn-ghost btn-sm">📋 Reçeteler</Link>
+              <Link href="/yeni" className="btn btn-light btn-sm">+ Yeni Kayıt</Link>
+            </nav>
           </div>
         </header>
         <main className="container">{children}</main>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getField, productOptions } from "@/lib/db";
+import { getField, listTemplates, productOptions } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 import { RecipeForm } from "@/components/RecipeForm";
 
@@ -15,7 +15,7 @@ export default async function NewRecipePage({ params }: { params: Promise<{ id: 
       <Link href={`/tarla/${field.id}`} className="back">← {field.full_name}</Link>
       <h1 className="page-title">Yeni Reçete</h1>
       <p className="subtle">{field.full_name}{field.crop ? ` · ${field.crop}` : ""}{field.area_donum ? ` · ${String(field.area_donum).replace(".", ",")} dönüm` : ""}{field.address ? ` · ${field.address}` : ""}</p>
-      <RecipeForm fieldId={field.id} fieldArea={field.area_donum} today={todayISO()} products={await productOptions()} />
+      <RecipeForm fieldId={field.id} fieldArea={field.area_donum} templates={await listTemplates()} today={todayISO()} products={await productOptions()} />
     </div>
   );
 }

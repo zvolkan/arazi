@@ -118,6 +118,16 @@ export default async function FieldPage({
                     )}
                   </div>
                   {v.note && <div className="note">{v.note}</div>}
+                  {v.photo_ids.length > 0 && (
+                    <div className="photo-grid photo-grid-sm">
+                      {v.photo_ids.map((pid) => (
+                        <a key={pid} href={`/api/foto/${pid}`} target="_blank" rel="noreferrer" className="photo-cell">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={`/api/foto/${pid}?k=kucuk`} alt="Ziyaret fotoğrafı" loading="lazy" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <form action={deleteVisit}>
                   <input type="hidden" name="id" value={v.id} />

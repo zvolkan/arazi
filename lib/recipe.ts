@@ -52,6 +52,15 @@ export type Recipe = {
   items: RecipeItem[];
 };
 
+/** Reçete şablonu: tarlaya ve tarihe bağlı değil, isimle saklanır */
+export type RecipeTemplate = {
+  id: number;
+  name: string;
+  note: string;
+  water_per_donum: number | null;
+  items: RecipeItem[];
+};
+
 /** Reçete numarası: 000012 */
 export function recipeNo(id: number): string {
   return String(id).padStart(6, "0");

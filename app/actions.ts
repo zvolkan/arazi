@@ -113,11 +113,20 @@ export async function addVisit(_prev: FormState, fd: FormData): Promise<FormStat
   const fieldId = Number(str(fd, "field_id"));
   const date = validDate(str(fd, "visit_date"));
   const note = str(fd, "note");
-  await sql(`INSERT INTO visits (field_id, visit_date, note) VALUES ($1, $2, $3)`, [
-    fieldId,
-    date,
-    note,
-  ]);
+  let photoIds: number[] = [];
+  try {
+    photoIds = (JSON.parse(str(fd, "photo_ids") || "[]") as unknown[]).map(Number).filter(Number.isInteger);
+  } catch {}
+  const rows = await sql<{ id: number }>(
+    `INSERT INTO visits (field_id, visit_date, note) VALUES ($1, $2, $3) RETURNING id`,
+    [fieldId, date, note]
+  );
+  if (photoIds.length) {
+    await sql(`UPDATE visit_photos SET visit_id = $1 WHERE id = ANY($2::int[]) AND visit_id IS NULL`, [
+      rows[0].id,
+      photoIds,
+    ]);
+  }
   revalidatePath("/");
   revalidatePath(`/tarla/${fieldId}`);
   redirect(`/tarla/${fieldId}?kaydedildi=1`);
@@ -144,10 +153,9 @@ type RecipePayload = {
   items: RecipeItem[];
 };
 
-function cleanRecipe(raw: unknown): RecipePayload | string {
-  const r = raw as Partial<RecipePayload>;
-  if (!r || typeof r !== "object") return "Geçersiz veri.";
-  const items = (Array.isArray(r.items) ? r.items : [])
+/** Reçete/şablon ürün satırlarını temizler ve doğrular */
+function cleanItems(raw: unknown): RecipeItem[] | string {
+  const items = (Array.isArray(raw) ? (raw as Partial<RecipeItem>[]) : [])
     .map((it) => ({
       week: Number(it.week),
       method: it.method,
@@ -164,7 +172,35 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     if (!UNITS.includes(it.unit as (typeof UNITS)[number])) return "Geçersiz birim.";
   }
   if (items.length === 0) return "En az bir ürün girin.";
-  const kind = recipeKind(items as RecipeItem[]);
+  return items as RecipeItem[];
+}
+
+/** Bilinen bir ürün farklı büyük/küçük harfle yazıldıysa kayıtlı yazımını kullan ("cloud" → "Cloud") */
+async function canonicalProducts(items: RecipeItem[]) {
+  const known = new Map((await productOptions()).map((p) => [p.toLocaleLowerCase("tr-TR"), p]));
+  for (const it of items) it.product = known.get(it.product.toLocaleLowerCase("tr-TR")) ?? it.product;
+}
+
+/** Ürün satırlarını tabloya yazar (recipe_items / recipe_template_items) */
+async function insertItems(table: "recipe_items" | "recipe_template_items", fk: string, id: number, items: RecipeItem[]) {
+  const values: unknown[] = [];
+  const tuples = items.map((it, i) => {
+    values.push(id, it.week, i, it.product, it.amount, it.unit, it.note, it.method);
+    const b = i * 8;
+    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
+  });
+  await sql(
+    `INSERT INTO ${table} (${fk}, week, position, product, amount, unit, note, method) VALUES ${tuples.join(", ")}`,
+    values
+  );
+}
+
+function cleanRecipe(raw: unknown): RecipePayload | string {
+  const r = raw as Partial<RecipePayload>;
+  if (!r || typeof r !== "object") return "Geçersiz veri.";
+  const items = cleanItems(r.items);
+  if (typeof items === "string") return items;
+  const kind = recipeKind(items);
   const hasFoliar = items.some((it) => it.method === "yapraktan");
   return {
     id: r.id ? Number(r.id) : undefined,
@@ -174,7 +210,7 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     note: String(r.note ?? "").trim(),
     area_donum: Number(r.area_donum) > 0 ? Number(r.area_donum) : null,
     water_per_donum: hasFoliar ? waterOrDefault(Number(r.water_per_donum)) : null,
-    items: items as RecipeItem[],
+    items,
   };
 }
 
@@ -188,11 +224,10 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
   const r = cleanRecipe(parsed);
   if (typeof r === "string") return { error: r };
 
-  // Bilinen bir ürün farklı büyük/küçük harfle yazıldıysa kayıtlı yazımını kullan ("cloud" → "Cloud")
-  const known = new Map((await productOptions()).map((p) => [p.toLocaleLowerCase("tr-TR"), p]));
-  for (const it of r.items) it.product = known.get(it.product.toLocaleLowerCase("tr-TR")) ?? it.product;
+  await canonicalProducts(r.items);
 
   let id = r.id;
+  const isNew = !id;
   if (id) {
     const upd = await sql<{ id: number }>(
       `UPDATE recipes SET recipe_date = $2, method = $3, note = $4, area_donum = $5, water_per_donum = $6 WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
@@ -211,16 +246,18 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
     id = ins[0].id;
   }
 
-  const values: unknown[] = [];
-  const tuples = r.items.map((it, i) => {
-    values.push(id, it.week, i, it.product, it.amount, it.unit, it.note, it.method);
-    const b = i * 8;
-    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
-  });
-  await sql(
-    `INSERT INTO recipe_items (recipe_id, week, position, product, amount, unit, note, method) VALUES ${tuples.join(", ")}`,
-    values
-  );
+  await insertItems("recipe_items", "recipe_id", id!, r.items);
+
+  // Reçete yazıldıysa tarlaya gidilmiştir: o tarihte ziyaret yoksa ekle (ileri tarihli reçetede ekleme)
+  if (isNew && r.recipe_date <= todayISO()) {
+    await sql(
+      `INSERT INTO visits (field_id, visit_date, note)
+       SELECT $1, $2::date, $3
+        WHERE NOT EXISTS (SELECT 1 FROM visits WHERE field_id = $1 AND visit_date = $2::date AND deleted_at IS NULL)`,
+      [r.field_id, r.recipe_date, `Reçete No ${String(id).padStart(6, "0")} yazıldı`]
+    );
+  }
+  revalidatePath("/");
   revalidatePath(`/tarla/${r.field_id}`);
   redirect(`/recete/${id}?kaydedildi=1`);
 }
@@ -262,4 +299,69 @@ export async function restoreItem(fd: FormData) {
   revalidatePath("/");
   revalidatePath("/silinenler");
   revalidatePath("/tarla/[id]", "page");
+}
+
+// ---------- Reçete şablonları ----------
+
+export async function saveTemplate(_prev: FormState, fd: FormData): Promise<FormState> {
+  let raw: { id?: number; name?: string; note?: string; water_per_donum?: number; items?: unknown };
+  try {
+    raw = JSON.parse(String(fd.get("payload") ?? ""));
+  } catch {
+    return { error: "Geçersiz veri." };
+  }
+  const name = String(raw.name ?? "").trim().replace(/\s+/g, " ");
+  if (!name) return { error: "Şablona bir ad verin (örn. Muz – Kış sulama)." };
+  const items = cleanItems(raw.items);
+  if (typeof items === "string") return { error: items };
+  await canonicalProducts(items);
+  const hasFoliar = items.some((it) => it.method === "yapraktan");
+  const water = hasFoliar ? waterOrDefault(Number(raw.water_per_donum)) : null;
+  const note = String(raw.note ?? "").trim();
+
+  let id = raw.id ? Number(raw.id) : 0;
+  if (id) {
+    const upd = await sql<{ id: number }>(
+      `UPDATE recipe_templates SET name = $2, note = $3, water_per_donum = $4, updated_at = now() WHERE id = $1 RETURNING id`,
+      [id, name, note, water]
+    );
+    if (!upd[0]) return { error: "Şablon bulunamadı." };
+    await sql(`DELETE FROM recipe_template_items WHERE template_id = $1`, [id]);
+  } else {
+    const ins = await sql<{ id: number }>(
+      `INSERT INTO recipe_templates (name, note, water_per_donum) VALUES ($1, $2, $3) RETURNING id`,
+      [name, note, water]
+    );
+    id = ins[0].id;
+  }
+  await insertItems("recipe_template_items", "template_id", id, items);
+  revalidatePath("/receteler");
+  redirect("/receteler?sablon=kaydedildi");
+}
+
+export async function deleteTemplate(fd: FormData) {
+  await sql(`DELETE FROM recipe_templates WHERE id = $1`, [Number(str(fd, "id"))]);
+  revalidatePath("/receteler");
+  redirect("/receteler");
+}
+
+/** Var olan bir reçeteyi isim vererek şablon olarak kaydeder */
+export async function saveRecipeAsTemplate(recipeId: number, name: string): Promise<{ error?: string; id?: number }> {
+  const n = name.trim().replace(/\s+/g, " ");
+  if (!n) return { error: "Şablon adı boş olamaz." };
+  const rows = await sql<{ id: number }>(
+    `INSERT INTO recipe_templates (name, note, water_per_donum)
+     SELECT $2, note, water_per_donum FROM recipes WHERE id = $1 AND deleted_at IS NULL
+     RETURNING id`,
+    [recipeId, n]
+  );
+  if (!rows[0]) return { error: "Reçete bulunamadı." };
+  await sql(
+    `INSERT INTO recipe_template_items (template_id, week, method, position, product, amount, unit, note)
+     SELECT $1, week, COALESCE(method, 'sulama'), position, product, amount, unit, note
+       FROM recipe_items WHERE recipe_id = $2`,
+    [rows[0].id, recipeId]
+  );
+  revalidatePath("/receteler");
+  return { id: rows[0].id };
 }

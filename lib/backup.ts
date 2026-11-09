@@ -13,8 +13,11 @@ const DATA_SQL = `jsonb_build_object(
   'fields',       COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM fields t), '[]'::jsonb),
   'visits',       COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM visits t), '[]'::jsonb),
   'recipes',      COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM recipes t), '[]'::jsonb),
-  'recipe_items', COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM recipe_items t), '[]'::jsonb)
+  'recipe_items', COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM recipe_items t), '[]'::jsonb),
+  'recipe_templates',      COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM recipe_templates t), '[]'::jsonb),
+  'recipe_template_items', COALESCE((SELECT jsonb_agg(t ORDER BY t.id) FROM recipe_template_items t), '[]'::jsonb)
 )`;
+// Not: fotoğraflar yedeğe dahil değil (boyut); veritabanında ziyaretle birlikte durur.
 
 type Row = Record<string, any>;
 export type BackupData = {
@@ -24,6 +27,8 @@ export type BackupData = {
   visits: Row[];
   recipes: Row[];
   recipe_items: Row[];
+  recipe_templates?: Row[];
+  recipe_template_items?: Row[];
 };
 
 /**
@@ -204,6 +209,37 @@ export async function backupWorkbook(data: BackupData, takenAt: Date | string): 
       inote: it.note ?? "",
       rnote: r.note,
     });
+  }
+
+  // 4) Şablonlar
+  const tpls = new Map((data.recipe_templates ?? []).map((t) => [t.id, t]));
+  if (tpls.size) {
+    const wsT = sheet("Şablonlar", [
+      { header: "Şablon", key: "name", width: 26 },
+      { header: "Hafta", key: "week", width: 7 },
+      { header: "Uygulama", key: "method", width: 11 },
+      { header: "Ürün", key: "product", width: 26 },
+      { header: "Miktar (dönüme)", key: "amount", width: 15 },
+      { header: "Birim", key: "unit", width: 7 },
+      { header: "Açıklama", key: "note", width: 30 },
+    ]);
+    const tItems = [...(data.recipe_template_items ?? [])].sort(
+      (a, b) =>
+        String(tpls.get(a.template_id)?.name ?? "").localeCompare(String(tpls.get(b.template_id)?.name ?? ""), "tr") ||
+        a.week - b.week ||
+        a.position - b.position
+    );
+    for (const it of tItems) {
+      wsT.addRow({
+        name: tpls.get(it.template_id)?.name,
+        week: it.week,
+        method: METHOD_LABEL[it.method as Method] ?? it.method,
+        product: it.product,
+        amount: Number(it.amount),
+        unit: it.unit,
+        note: it.note ?? "",
+      });
+    }
   }
 
   wb.creator = "Arazi Takip Sistemi";

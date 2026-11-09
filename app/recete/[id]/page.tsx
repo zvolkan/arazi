@@ -7,6 +7,7 @@ import { formatPacks, packCounts } from "@/lib/catalog";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { SaveAsTemplateButton } from "@/components/SaveAsTemplateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,10 @@ export default async function RecipePage({
         <div className="actions-row" style={{ marginTop: 4 }}>
           <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn">📄 PDF'i Aç</a>
           <Link href={`/recete/${recipe.id}/duzenle`} className="btn">✎ Düzenle</Link>
+          <SaveAsTemplateButton
+            recipeId={recipe.id}
+            suggestion={[field.crop, KIND_LABEL[recipe.method]].filter(Boolean).join(" – ")}
+          />
         </div>
       </div>
 

@@ -25,6 +25,11 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - **Ürün listesi (GTS):** reçetede ürün yazarken arama listesi çıkar (içinde geçen harflerle, "clo" → Bayokim Cloud);
   seçilen ürünün birimi kendiliğinden gelir; toplamda **kaç paket** alınacağı yazar (en az artanı veren birleşim,
   örn. 12 kg Tracer → 1 × 8 kg + 1 × 4 kg kova)
+- **Reçeteler bölümü** (üst bardaki 📋 Reçeteler): isimli **reçete şablonları** oluştur/düzenle/sil ve son yazılan reçeteler.
+  Yeni reçetede en üstteki **"Şablondan başla"** ile şablon yüklenir; bir reçete de "Şablon olarak kaydet" ile şablona çevrilir.
+- Yeni reçete kaydedilince o tarihte ziyaret yoksa **ziyaret otomatik eklenir** ("Reçete No … yazıldı")
+- **Ziyarette fotoğraf:** telefonda küçültülüp (~200 KB) veritabanına kaydedilir; ziyaret geçmişinde küçük resim, dokununca büyük hali.
+  Fotoğraflar günlük yedeğe dahil değildir.
 - Reçete PDF'i (Bayırlıoğlu logolu, Zir. Müh. D.Ali Bulut başlıklı) iPhone paylaşım menüsünden WhatsApp ile gönderilir
 - Excel'e aktar (.xlsx), bilgisayar görünümünde
 - Şirket içi kullanım için girişsiz; arama motorlarında listelenmez
@@ -61,6 +66,8 @@ app/
   silinenler/              Silinen kayıtlar ve geri alma
   yedekler/                Otomatik yedekler, tam yedek indirme
   api/yedek/               Yedek Excel'i
+  receteler/               Reçete şablonları ve son reçeteler
+  api/foto/                Fotoğraf yükleme ve gösterme
   tarla/[id]/recete/yeni/  Yeni reçete
   recete/[id]/             Reçete görüntüleme, PDF paylaşma, düzenleme
   api/recete/[id]/         Reçete PDF'i

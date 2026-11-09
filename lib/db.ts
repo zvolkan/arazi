@@ -1,5 +1,5 @@
 import { Pool, types } from "pg";
-import { type Recipe, type RecipeItem } from "./recipe";
+import { type Recipe, type RecipeItem, type RecipeTemplate } from "./recipe";
 import { CATALOG } from "./catalog";
 
 // DATE kolonlarını JS Date yerine "YYYY-MM-DD" metni olarak al (saat dilimi kaymasını önler)
@@ -95,6 +95,40 @@ ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS method TEXT;
 UPDATE recipe_items i SET method = r.method FROM recipes r
  WHERE i.recipe_id = r.id AND i.method IS NULL AND r.method IN ('sulama', 'yapraktan');
 
+-- Reçete şablonları
+CREATE TABLE IF NOT EXISTS recipe_templates (
+  id              SERIAL PRIMARY KEY,
+  name            TEXT NOT NULL,
+  note            TEXT NOT NULL DEFAULT '',
+  water_per_donum NUMERIC,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS recipe_template_items (
+  id          SERIAL PRIMARY KEY,
+  template_id INTEGER NOT NULL REFERENCES recipe_templates(id) ON DELETE CASCADE,
+  week        SMALLINT NOT NULL,
+  method      TEXT NOT NULL,
+  position    SMALLINT NOT NULL DEFAULT 0,
+  product     TEXT NOT NULL,
+  amount      NUMERIC NOT NULL,
+  unit        TEXT NOT NULL,
+  note        TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS recipe_template_items_tpl_idx ON recipe_template_items (template_id);
+
+-- Ziyaret fotoğrafları (küçültülmüş JPEG). visit_id boşsa henüz kaydedilmemiş yüklemedir.
+CREATE TABLE IF NOT EXISTS visit_photos (
+  id         SERIAL PRIMARY KEY,
+  visit_id   INTEGER REFERENCES visits(id) ON DELETE CASCADE,
+  data       BYTEA NOT NULL,
+  thumb      BYTEA NOT NULL,
+  width      INTEGER,
+  height     INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS visit_photos_visit_idx ON visit_photos (visit_id);
+
 -- Günlük otomatik yedekler (tüm tabloların kopyası)
 CREATE TABLE IF NOT EXISTS backups (
   id         SERIAL PRIMARY KEY,
@@ -146,6 +180,7 @@ export type Visit = {
   field_id: number;
   visit_date: string;
   note: string;
+  photo_ids: number[];
 };
 
 // ---------- Sorgular ----------
@@ -177,8 +212,10 @@ export async function getField(id: number): Promise<FieldRow | null> {
 
 export async function listVisits(fieldId: number): Promise<Visit[]> {
   return sql<Visit>(
-    `SELECT id, field_id, visit_date, note FROM visits
-      WHERE field_id = $1 AND deleted_at IS NULL ORDER BY visit_date DESC, id DESC`,
+    `SELECT v.id, v.field_id, v.visit_date, v.note,
+            COALESCE((SELECT array_agg(p.id ORDER BY p.id) FROM visit_photos p WHERE p.visit_id = v.id), '{}') AS photo_ids
+       FROM visits v
+      WHERE v.field_id = $1 AND v.deleted_at IS NULL ORDER BY v.visit_date DESC, v.id DESC`,
     [fieldId]
   );
 }
@@ -289,4 +326,58 @@ export async function purgeTrash() {
   await sql(`DELETE FROM recipes WHERE deleted_at < ${cutoff}`);
   await sql(`DELETE FROM fields  WHERE deleted_at < ${cutoff}`);
   await sql(`DELETE FROM farmers fa WHERE NOT EXISTS (SELECT 1 FROM fields f WHERE f.farmer_id = fa.id)`);
+  // Yüklenip ziyarete bağlanmamış (kaydedilmeden vazgeçilmiş) fotoğraflar
+  await sql(`DELETE FROM visit_photos WHERE visit_id IS NULL AND created_at < now() - interval '1 day'`);
+}
+
+// ---------- Reçete şablonları ----------
+
+const TEMPLATE_SELECT = `
+  SELECT t.id, t.name, t.note, t.water_per_donum,
+         COALESCE((SELECT json_agg(json_build_object(
+                     'week', i.week, 'method', i.method, 'product', i.product,
+                     'amount', i.amount, 'unit', i.unit, 'note', i.note)
+                   ORDER BY i.week, CASE WHEN i.method = 'yapraktan' THEN 1 ELSE 0 END, i.position, i.id)
+                   FROM recipe_template_items i WHERE i.template_id = t.id), '[]') AS items
+    FROM recipe_templates t`;
+
+export async function listTemplates(): Promise<RecipeTemplate[]> {
+  const rows = await sql<RecipeTemplate>(`${TEMPLATE_SELECT} ORDER BY t.name`);
+  return rows.map((t) => ({ ...t, items: t.items.map((i) => ({ ...i, amount: Number(i.amount) })) }));
+}
+
+export async function getTemplate(id: number): Promise<RecipeTemplate | null> {
+  const rows = await sql<RecipeTemplate>(`${TEMPLATE_SELECT} WHERE t.id = $1`, [id]);
+  const t = rows[0];
+  return t ? { ...t, items: t.items.map((i) => ({ ...i, amount: Number(i.amount) })) } : null;
+}
+
+/** Son yazılan reçeteler (tüm tarlalar) */
+export async function listRecentRecipes(limit = 30) {
+  return sql<{
+    id: number;
+    recipe_date: string;
+    method: Recipe["method"];
+    field_id: number;
+    full_name: string;
+    crop: string;
+    item_count: number;
+  }>(
+    `SELECT r.id, r.recipe_date, r.method, f.id AS field_id, fa.full_name, f.crop,
+            (SELECT COUNT(*)::int FROM recipe_items i WHERE i.recipe_id = r.id) AS item_count
+       FROM recipes r JOIN fields f ON f.id = r.field_id JOIN farmers fa ON fa.id = f.farmer_id
+      WHERE r.deleted_at IS NULL AND f.deleted_at IS NULL
+      ORDER BY r.recipe_date DESC, r.id DESC LIMIT $1`,
+    [limit]
+  );
+}
+
+// ---------- Fotoğraflar ----------
+
+export async function getPhoto(id: number, kind: "data" | "thumb") {
+  const rows = await sql<{ img: Buffer }>(
+    `SELECT ${kind === "thumb" ? "thumb" : "data"} AS img FROM visit_photos WHERE id = $1`,
+    [id]
+  );
+  return rows[0]?.img ?? null;
 }
