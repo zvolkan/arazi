@@ -1,6 +1,6 @@
 // Arazi Takip — internetsiz kullanım için service worker
 // Sayfalar: önce internet, yoksa son kaydedilen hali. Statik dosyalar ve fotoğraflar: önce önbellek.
-const V = "v1";
+const V = "v2";
 const PAGES = `sayfalar-${V}`;
 const STATIC = `statik-${V}`;
 const PHOTOS = `foto-${V}`;
@@ -27,11 +27,21 @@ const isStatic = (url) =>
   /^\/(icon|apple-icon|manifest\.webmanifest)/.test(url.pathname) ||
   /\.(woff2?|png|svg|ico)$/.test(url.pathname);
 
+/**
+ * iPhone Safari, service worker'ın verdiği yanıt yönlendirme sonucu ise (redirected) sayfayı açmaz
+ * ve "güvenli bağlantı kurulamadı" benzeri hata gösterir. Böyle yanıtları temiz bir kopyayla değiştirir.
+ */
+async function clean(res) {
+  if (!res || !res.redirected) return res;
+  const body = await res.blob();
+  return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+}
+
 async function cacheFirst(cacheName, request) {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(request, { ignoreVary: true });
-  if (hit) return hit;
-  const res = await fetch(request);
+  if (hit) return clean(hit);
+  const res = await clean(await fetch(request));
   if (res.ok) cache.put(request, res.clone());
   return res;
 }
@@ -51,6 +61,7 @@ async function cacheAssetsOf(html) {
 }
 
 async function savePage(path, res) {
+  res = await clean(res);
   const cache = await caches.open(PAGES);
   await cache.put(path, res.clone());
   try {
@@ -61,7 +72,7 @@ async function savePage(path, res) {
 async function networkFirstPage(request) {
   const url = new URL(request.url);
   try {
-    const res = await fetch(request);
+    const res = await clean(await fetch(request));
     if (res.ok && res.headers.get("content-type")?.includes("text/html")) {
       savePage(url.pathname, res.clone());
     }
@@ -69,8 +80,8 @@ async function networkFirstPage(request) {
   } catch {
     const cache = await caches.open(PAGES);
     return (
-      (await cache.match(url.pathname, { ignoreVary: true })) ||
-      (await cache.match(OFFLINE_URL, { ignoreVary: true })) ||
+      (await clean(await cache.match(url.pathname, { ignoreVary: true }))) ||
+      (await clean(await cache.match(OFFLINE_URL, { ignoreVary: true }))) ||
       new Response("İnternet yok", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } })
     );
   }
