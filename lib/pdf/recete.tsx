@@ -190,7 +190,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
             <View style={{ marginTop: 8, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }}>
               <View style={[s.th, { borderRadius: 0 }]} minPresenceAhead={70}>
                 <Text style={[s.thText, { width: "46%" }]}>
-                  TOPLAM  ·  3 HAFTA  ·  {basis.areaLabel.toLocaleUpperCase("tr-TR")}
+                  TOPLAM{basis.warning ? "  ·  1 DÖNÜM İÇİN" : ""}
                 </Text>
                 <Text style={[s.thText, { width: "20%", textAlign: "right" }]}>MİKTAR</Text>
                 <Text style={[s.thText, { width: "34%", textAlign: "right" }]}>PAKET</Text>
