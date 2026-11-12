@@ -69,6 +69,8 @@ export type Recipe = {
   area_donum: number | null;
   /** Yapraktan: dönüme verilecek su (L) */
   water_per_donum: number | null;
+  /** Yapraktan: ilacın hazırlandığı varil (L); yapraktan miktarları bu varile göre. Boşsa dönüme göre. */
+  barrel_liters: number | null;
   items: RecipeItem[];
 };
 
@@ -78,6 +80,7 @@ export type RecipeTemplate = {
   name: string;
   note: string;
   water_per_donum: number | null;
+  barrel_liters: number | null;
   items: RecipeItem[];
 };
 
@@ -108,12 +111,17 @@ export type Total = { product: string; amount: number; unit: "L" | "kg" };
  * "cloud" ve "Cloud " aynı ürün sayılır. Miktarlar dönüm başına girildiği için dönümle çarpılır.
  */
 export function computeTotals(
-  items: Pick<RecipeItem, "product" | "amount" | "unit">[],
-  area: number | null = 1
+  items: Pick<RecipeItem, "product" | "amount" | "unit" | "method">[],
+  /** Çarpan: tek sayı (dönüm) ya da uygulamaya göre ayrı (sulama: dönüm, yapraktan: varil sayısı) */
+  factor: number | Record<Method, number> | null = 1
 ): Total[] {
-  const k = area && area > 0 ? area : 1;
+  const kOf = (m: Method) => {
+    const v = typeof factor === "number" || factor == null ? factor : factor[m];
+    return v && v > 0 ? v : 1;
+  };
   const map = new Map<string, Total>();
   for (const it of items) {
+    const k = kOf(it.method);
     const name = it.product.trim().replace(/\s+/g, " ");
     if (!name || !(it.amount > 0)) continue;
     const isVolume = it.unit === "L" || it.unit === "ml";
@@ -137,24 +145,40 @@ export function waterOrDefault(water: number | null | undefined): number {
 }
 
 
+/** Yapraktan miktarlarının girildiği su: varil girildiyse varil, yoksa dönüme su (yani dönüme göre) */
+export function doseWater(water: number | null | undefined, barrel: number | null | undefined): number {
+  return barrel && barrel > 0 ? barrel : waterOrDefault(water);
+}
+
 export type Basis = {
-  /** Dönüme girilen miktarlar bununla çarpılınca toplam çıkar */
-  factor: number;
+  /** Girilen miktarlar bununla çarpılınca toplam çıkar: sulama × dönüm, yapraktan × varil sayısı */
+  factor: Record<Method, number>;
   /** "4 dönüm" */
   areaLabel: string;
-  /** Yapraktan varsa bir uygulamada kullanılacak toplam su: "400 L" */
+  /** Yapraktan varsa bir uygulamada kullanılacak toplam su: "600 L" */
   waterLabel?: string;
+  /** Varil girildiyse bir uygulamadaki varil sayısı: "3 varil" */
+  barrelLabel?: string;
   /** Eksik bilgi varsa uyarı */
   warning?: string;
 };
 
-/** Miktarlar her iki uygulamada da dönüme girilir; toplam = miktar × dönüm. */
-export function totalsBasis(area: number | null, water: number | null, hasFoliar: boolean): Basis {
+/**
+ * Sulama: miktar dönüme girilir → toplam = miktar × dönüm.
+ * Yapraktan: miktar varile girilir → toplam = miktar × (dönüme su × dönüm ÷ varil).
+ * Varil girilmezse varil = dönüme su sayılır, yani yapraktan da dönüme göre olur.
+ */
+export function totalsBasis(area: number | null, water: number | null, barrel: number | null, hasFoliar: boolean): Basis {
   const a = area && area > 0 ? area : 1;
+  const w = waterOrDefault(water);
+  const v = doseWater(water, barrel);
+  const totalWater = w * a;
+  const hasBarrel = !!(barrel && barrel > 0);
   return {
-    factor: a,
+    factor: { sulama: a, yapraktan: totalWater / v },
     areaLabel: `${formatAmount(a)} dönüm`,
-    waterLabel: hasFoliar ? `${formatAmount(waterOrDefault(water) * a)} L` : undefined,
+    waterLabel: hasFoliar ? `${formatAmount(totalWater)} L` : undefined,
+    barrelLabel: hasFoliar && hasBarrel ? `${formatAmount(totalWater / v)} varil` : undefined,
     warning: area && area > 0 ? undefined : "Dönüm girilmediği için toplam 1 dönüme göre.",
   };
 }

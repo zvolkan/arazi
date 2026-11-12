@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getField, getRecipe } from "@/lib/db";
 import { formatDate } from "@/lib/format";
-import { KIND_LABEL, METHODS, METHOD_LABEL, SLOTS, betweenWeeks, isBetween, computeTotals, formatAmount, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
+import { KIND_LABEL, METHODS, METHOD_LABEL, SLOTS, betweenWeeks, isBetween, computeTotals, formatAmount, recipeNo, totalsBasis, waterOrDefault, doseWater } from "@/lib/recipe";
 import { formatPacks, packCounts } from "@/lib/catalog";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
@@ -40,7 +40,8 @@ export default async function RecipePage({
   const no = recipeNo(recipe.id);
   const hasFoliar = recipe.items.some((it) => it.method === "yapraktan");
   const water = waterOrDefault(recipe.water_per_donum);
-  const basis = totalsBasis(recipe.area_donum, recipe.water_per_donum, hasFoliar);
+  const doseL = doseWater(recipe.water_per_donum, recipe.barrel_liters);
+  const basis = totalsBasis(recipe.area_donum, recipe.water_per_donum, recipe.barrel_liters, hasFoliar);
   const totals = computeTotals(recipe.items, basis.factor);
   const pdfUrl = `/api/recete/${recipe.id}`;
 
@@ -78,7 +79,10 @@ export default async function RecipePage({
         <h2>Toplam ihtiyaç · {basis.areaLabel}</h2>
         <p className="totals-hint">
           PDF'in en altında da yer alır.
-          {basis.waterLabel && <> Yapraktan: dönüme {formatAmount(water)} L su, her uygulamada <b>{basis.waterLabel}</b>.</>}
+          {basis.waterLabel && (
+            <> Yapraktan: dönüme {formatAmount(water)} L su, her uygulamada <b>{basis.waterLabel}</b>
+              {basis.barrelLabel && <> = <b>{basis.barrelLabel}</b> ({formatAmount(doseL)} L)</>}.</>
+          )}
         </p>
         {basis.warning && <p className="alert alert-error" style={{ margin: "0 0 10px" }}>{basis.warning}</p>}
         <ul className="totals-list">
@@ -105,7 +109,7 @@ export default async function RecipePage({
         return (
           <div className={`panel${between ? " panel-between" : ""}`} key={w}>
             <h2>
-              {between ? <>Ara sulama <span className="basis-tag">({a}–{b}. hafta arası · dönüme)</span></> : <>{w}. Hafta <span className="basis-tag">(dönüme)</span></>}
+              {between ? <>Ara sulama <span className="basis-tag">({a}–{b}. hafta arası)</span></> : <>{w}. Hafta</>}
             </h2>
             {items.length === 0 ? (
               <p style={{ color: "var(--muted)", margin: 0 }}>Bu hafta için ürün yok.</p>
@@ -116,7 +120,7 @@ export default async function RecipePage({
                 return (
                   <div key={m}>
                     <div className="rx-sub">{m === "sulama" ? "💧" : "🍃"} {METHOD_LABEL[m]}
-                      {m === "yapraktan" && <> · {formatAmount(water)} litre suya</>}
+                      {m === "sulama" ? <> · dönüme</> : <> · {formatAmount(doseL)} litre suya</>}
                     </div>
                     <ul className="totals-list">
                       {list.map((it, i) => (

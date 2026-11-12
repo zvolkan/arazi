@@ -157,8 +157,12 @@ type RecipePayload = {
   note: string;
   area_donum: number | null;
   water_per_donum: number | null;
+  barrel_liters: number | null;
   items: RecipeItem[];
 };
+
+/** Varil litresi: yapraktan yoksa veya girilmediyse boş */
+const cleanBarrel = (v: unknown, hasFoliar: boolean) => (hasFoliar && Number(v) > 0 ? Number(v) : null);
 
 /** Reçete/şablon ürün satırlarını temizler ve doğrular */
 function cleanItems(raw: unknown): RecipeItem[] | string {
@@ -217,6 +221,7 @@ function cleanRecipe(raw: unknown): RecipePayload | string {
     note: String(r.note ?? "").trim(),
     area_donum: Number(r.area_donum) > 0 ? Number(r.area_donum) : null,
     water_per_donum: hasFoliar ? waterOrDefault(Number(r.water_per_donum)) : null,
+    barrel_liters: cleanBarrel(r.barrel_liters, hasFoliar),
     items,
   };
 }
@@ -237,17 +242,17 @@ export async function saveRecipe(_prev: FormState, fd: FormData): Promise<FormSt
   const isNew = !id;
   if (id) {
     const upd = await sql<{ id: number }>(
-      `UPDATE recipes SET recipe_date = $2, method = $3, note = $4, area_donum = $5, water_per_donum = $6 WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
-      [id, r.recipe_date, r.method, r.note, r.area_donum, r.water_per_donum]
+      `UPDATE recipes SET recipe_date = $2, method = $3, note = $4, area_donum = $5, water_per_donum = $6, barrel_liters = $7 WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+      [id, r.recipe_date, r.method, r.note, r.area_donum, r.water_per_donum, r.barrel_liters]
     );
     if (!upd[0]) return { error: "Reçete bulunamadı." };
     await sql(`DELETE FROM recipe_items WHERE recipe_id = $1`, [id]);
   } else {
     const ins = await sql<{ id: number }>(
-      `INSERT INTO recipes (field_id, recipe_date, method, note, area_donum, water_per_donum)
-       SELECT $1, $2, $3, $4, $5, $6 WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1 AND deleted_at IS NULL)
+      `INSERT INTO recipes (field_id, recipe_date, method, note, area_donum, water_per_donum, barrel_liters)
+       SELECT $1, $2, $3, $4, $5, $6, $7 WHERE EXISTS (SELECT 1 FROM fields WHERE id = $1 AND deleted_at IS NULL)
        RETURNING id`,
-      [r.field_id, r.recipe_date, r.method, r.note, r.area_donum, r.water_per_donum]
+      [r.field_id, r.recipe_date, r.method, r.note, r.area_donum, r.water_per_donum, r.barrel_liters]
     );
     if (!ins[0]) return { error: "Tarla bulunamadı." };
     id = ins[0].id;
@@ -311,7 +316,7 @@ export async function restoreItem(fd: FormData) {
 // ---------- Reçete şablonları ----------
 
 export async function saveTemplate(_prev: FormState, fd: FormData): Promise<FormState> {
-  let raw: { id?: number; name?: string; note?: string; water_per_donum?: number; items?: unknown };
+  let raw: { id?: number; name?: string; note?: string; water_per_donum?: number; barrel_liters?: number; items?: unknown };
   try {
     raw = JSON.parse(String(fd.get("payload") ?? ""));
   } catch {
@@ -324,20 +329,21 @@ export async function saveTemplate(_prev: FormState, fd: FormData): Promise<Form
   await canonicalProducts(items);
   const hasFoliar = items.some((it) => it.method === "yapraktan");
   const water = hasFoliar ? waterOrDefault(Number(raw.water_per_donum)) : null;
+  const barrel = cleanBarrel(raw.barrel_liters, hasFoliar);
   const note = String(raw.note ?? "").trim();
 
   let id = raw.id ? Number(raw.id) : 0;
   if (id) {
     const upd = await sql<{ id: number }>(
-      `UPDATE recipe_templates SET name = $2, note = $3, water_per_donum = $4, updated_at = now() WHERE id = $1 RETURNING id`,
-      [id, name, note, water]
+      `UPDATE recipe_templates SET name = $2, note = $3, water_per_donum = $4, barrel_liters = $5, updated_at = now() WHERE id = $1 RETURNING id`,
+      [id, name, note, water, barrel]
     );
     if (!upd[0]) return { error: "Şablon bulunamadı." };
     await sql(`DELETE FROM recipe_template_items WHERE template_id = $1`, [id]);
   } else {
     const ins = await sql<{ id: number }>(
-      `INSERT INTO recipe_templates (name, note, water_per_donum) VALUES ($1, $2, $3) RETURNING id`,
-      [name, note, water]
+      `INSERT INTO recipe_templates (name, note, water_per_donum, barrel_liters) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [name, note, water, barrel]
     );
     id = ins[0].id;
   }
@@ -357,8 +363,8 @@ export async function saveRecipeAsTemplate(recipeId: number, name: string): Prom
   const n = name.trim().replace(/\s+/g, " ");
   if (!n) return { error: "Şablon adı boş olamaz." };
   const rows = await sql<{ id: number }>(
-    `INSERT INTO recipe_templates (name, note, water_per_donum)
-     SELECT $2, note, water_per_donum FROM recipes WHERE id = $1 AND deleted_at IS NULL
+    `INSERT INTO recipe_templates (name, note, water_per_donum, barrel_liters)
+     SELECT $2, note, water_per_donum, barrel_liters FROM recipes WHERE id = $1 AND deleted_at IS NULL
      RETURNING id`,
     [recipeId, n]
   );

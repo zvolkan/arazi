@@ -15,6 +15,7 @@ import {
   recipeKind,
   totalsBasis,
   waterOrDefault,
+  doseWater,
   DEFAULT_WATER_PER_DONUM,
   formatAmount,
   parseAmount,
@@ -68,7 +69,7 @@ type Props =
       initial?: RecipeTemplate;
     };
 
-type DraftData = { date: string; area: string; water: string; note: string; name: string; weeks: Week[] };
+type DraftData = { date: string; area: string; water: string; barrel?: string; note: string; name: string; weeks: Week[] };
 
 export function RecipeForm(props: Props) {
   const isTemplate = props.mode === "template";
@@ -100,6 +101,10 @@ export function RecipeForm(props: Props) {
 
   const [water, setWater] = useState(numStr(props.initial?.water_per_donum ?? DEFAULT_WATER_PER_DONUM));
   const waterEff = waterOrDefault(parseAmount(water) || null);
+  // Yapraktan ürün miktarları bu varile göre girilir (boşsa dönüme göre)
+  const [barrel, setBarrel] = useState(numStr(props.initial?.barrel_liters));
+  const barrelNum = parseAmount(barrel) || null;
+  const doseL = doseWater(waterEff, barrelNum);
   const [note, setNote] = useState(props.initial?.note ?? "");
   const [weeks, setWeeks] = useState<Week[]>(() => weeksFrom(initialItems));
   const [usedTemplate, setUsedTemplate] = useState("");
@@ -112,6 +117,7 @@ export function RecipeForm(props: Props) {
       setDate(d.data.date || date);
       setArea(d.data.area ?? "");
       setWater(d.data.water ?? "");
+      setBarrel(d.data.barrel ?? "");
       setNote(d.data.note ?? "");
       setName(d.data.name ?? "");
       let ws = d.data.weeks;
@@ -190,24 +196,26 @@ export function RecipeForm(props: Props) {
     if (items.length > 0 && !confirm(`Girilen ürünler silinip "${t.name}" şablonu yüklensin mi?`)) return;
     setWeeks(weeksFrom(t.items));
     if (t.water_per_donum) setWater(numStr(t.water_per_donum));
+    setBarrel(numStr(t.barrel_liters));
     setNote(t.note ?? "");
     setUsedTemplate(t.name);
   };
 
   const hasFoliarRows = weeks.some((wk) => wk.yapraktan.length > 0);
   const hasFoliar = items.some((it) => it.method === "yapraktan");
-  const basis = totalsBasis(parseAmount(area) || null, parseAmount(water) || null, hasFoliar);
+  const basis = totalsBasis(parseAmount(area) || null, parseAmount(water) || null, barrelNum, hasFoliar);
   const totals = useMemo(() => computeTotals(items, basis.factor), [items, basis.factor]);
 
   const payload = JSON.stringify(
     isTemplate
-      ? { id: props.initial?.id, name, note, water_per_donum: hasFoliar ? waterEff : null, items }
+      ? { id: props.initial?.id, name, note, water_per_donum: hasFoliar ? waterEff : null, barrel_liters: hasFoliar ? barrelNum : null, items }
       : {
           id: recipeInit?.id,
           field_id: props.fieldId,
           recipe_date: date,
           area_donum: parseAmount(area) || null,
           water_per_donum: hasFoliar ? waterEff : null,
+          barrel_liters: hasFoliar ? barrelNum : null,
           note,
           items,
         }
@@ -221,9 +229,9 @@ export function RecipeForm(props: Props) {
       firstSave.current = false;
       return;
     }
-    const t = setTimeout(() => saveDraft<DraftData>(draftKey, { date, area, water, note, name, weeks }), 400);
+    const t = setTimeout(() => saveDraft<DraftData>(draftKey, { date, area, water, barrel, note, name, weeks }), 400);
     return () => clearTimeout(t);
-  }, [draftKey, date, area, water, note, name, weeks]);
+  }, [draftKey, date, area, water, barrel, note, name, weeks]);
 
   const templates = !isTemplate ? (props.templates ?? []) : [];
   const blocked = items.length === 0 || (isTemplate && !name.trim());
@@ -312,8 +320,28 @@ export function RecipeForm(props: Props) {
             <small>Boş bırakılırsa {DEFAULT_WATER_PER_DONUM} L kabul edilir.</small>
           </label>
         )}
+        {hasFoliarRows && (
+          <label className="field" style={{ marginTop: 14, marginBottom: 0 }}>
+            <span>🍃 Yapraktan uygulanacak varilin litresi kaç?</span>
+            <input
+              inputMode="decimal"
+              value={barrel}
+              onChange={(e) => setBarrel(e.target.value.replace(/[^\d.,]/g, ""))}
+              placeholder="örn. 200"
+            />
+            <small>
+              {barrelNum
+                ? <>Yapraktan ürün miktarlarını <b>{formatAmount(barrelNum)} litrelik varile</b> göre girin.</>
+                : <>Boş bırakılırsa yapraktan miktarları da dönüme ({formatAmount(waterEff)} L suya) göre girilir.</>}
+              {barrelNum && !isTemplate && basis.waterLabel && (
+                <> Bu tarlada her uygulamada {basis.waterLabel} su = <b>{basis.barrelLabel}</b>.</>
+              )}
+            </small>
+          </label>
+        )}
         <p className="basis-hint">
-          Tüm miktarları <b>dönüme</b> göre girin. Her haftada sulama ve yapraktan ürünleri ayrı ayrı ekleyebilirsiniz.
+          Sulama miktarlarını <b>dönüme</b>, yapraktan miktarlarını <b>{formatAmount(doseL)} L suya</b> göre girin.
+          Her haftada sulama ve yapraktan ürünleri ayrı ayrı ekleyebilirsiniz.
         </p>
       </div>
 
@@ -369,7 +397,7 @@ export function RecipeForm(props: Props) {
                   <input
                     className="rx-amount"
                     inputMode="decimal"
-                    placeholder="Miktar/dönüm"
+                    placeholder={m === "sulama" ? "Miktar/dönüm" : "Miktar"}
                     value={r.amount}
                     onChange={(e) => setRow(w, m, r.key, { amount: e.target.value.replace(/[^\d.,]/g, "") })}
                   />
@@ -416,7 +444,9 @@ export function RecipeForm(props: Props) {
           <h2>Toplam ihtiyaç · {basis.areaLabel}</h2>
           <p className="totals-hint">
             PDF'in en altında da yer alır.
-            {basis.waterLabel && <> Yapraktan uygulamada her seferinde <b>{basis.waterLabel} su</b>.</>}
+            {basis.waterLabel && (
+              <> Yapraktan uygulamada her seferinde <b>{basis.waterLabel} su</b>{basis.barrelLabel && <> ({basis.barrelLabel})</>}.</>
+            )}
           </p>
           {basis.warning && <p className="alert alert-error" style={{ margin: "0 0 10px" }}>{basis.warning}</p>}
           {totals.length === 0 ? (

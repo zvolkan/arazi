@@ -81,6 +81,8 @@ ALTER TABLE fields ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
 ALTER TABLE farmers ADD COLUMN IF NOT EXISTS starred BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS area_donum NUMERIC;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS water_per_donum NUMERIC;
+-- Yapraktan: ilacın hazırlandığı varil (L); yapraktan miktarları bu varile göre
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS barrel_liters NUMERIC;
 
 -- Silinenler: kayıtlar 30 gün boyunca geri alınabilir
 ALTER TABLE fields  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
@@ -104,6 +106,7 @@ CREATE TABLE IF NOT EXISTS recipe_templates (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE recipe_templates ADD COLUMN IF NOT EXISTS barrel_liters NUMERIC;
 CREATE TABLE IF NOT EXISTS recipe_template_items (
   id          SERIAL PRIMARY KEY,
   template_id INTEGER NOT NULL REFERENCES recipe_templates(id) ON DELETE CASCADE,
@@ -249,7 +252,7 @@ export async function listRecipes(fieldId: number) {
 
 export async function getRecipe(id: number): Promise<Recipe | null> {
   const rows = await sql<Omit<Recipe, "items">>(
-    `SELECT id, field_id, recipe_date, method, note, area_donum, water_per_donum FROM recipes WHERE id = $1 AND deleted_at IS NULL`,
+    `SELECT id, field_id, recipe_date, method, note, area_donum, water_per_donum, barrel_liters FROM recipes WHERE id = $1 AND deleted_at IS NULL`,
     [id]
   );
   if (!rows[0]) return null;
@@ -333,7 +336,7 @@ export async function purgeTrash() {
 // ---------- Reçete şablonları ----------
 
 const TEMPLATE_SELECT = `
-  SELECT t.id, t.name, t.note, t.water_per_donum,
+  SELECT t.id, t.name, t.note, t.water_per_donum, t.barrel_liters,
          COALESCE((SELECT json_agg(json_build_object(
                      'week', i.week, 'method', i.method, 'product', i.product,
                      'amount', i.amount, 'unit', i.unit, 'note', i.note)
