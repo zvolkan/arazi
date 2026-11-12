@@ -79,11 +79,10 @@ const s = StyleSheet.create({
     backgroundColor: C.greenSoft,
     borderBottomWidth: 1,
     borderColor: C.line,
-    borderLeftWidth: 3,
-    borderLeftColor: C.green,
     paddingVertical: 2.5,
-    paddingHorizontal: 8,
   },
+  /** Grup satırının ilk hücresi: soldaki yeşil çizgi + ürün sütunuyla aynı iç boşluk */
+  groupFirst: { borderLeftWidth: 3, borderLeftColor: C.green, paddingLeft: 10, paddingRight: 10 },
   groupText: { fontSize: 10, fontWeight: 700, color: C.green, letterSpacing: 0.4 },
   footer: { position: "absolute", bottom: 18, left: 34, right: 34, textAlign: "center", fontSize: 9, color: C.muted },
 });
@@ -109,9 +108,10 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   const kindText =
     foliar && irrigation ? "SULAMA + YAPRAKTAN" : foliar ? "YAPRAKTAN UYGULAMA" : "SULAMA İLE UYGULAMA";
   // Sulama miktarları dönüme, yapraktan miktarları varile (girilmediyse dönüme suya) göre
+  // [başlık, miktar sütununun üstüne gelen birim]
   const SUB_LABEL = {
-    sulama: "SULAMA İLE  ·  DÖNÜME",
-    yapraktan: `YAPRAKTAN  ·  ${formatAmount(doseL)} LİTRE SUYA`,
+    sulama: ["SULAMA İLE", "DÖNÜME"],
+    yapraktan: ["YAPRAKTAN", `${formatAmount(doseL)} LİTRE SUYA`],
   } as const;
   // Sütunlar: Ürün | Dönüme | (Açıklama)
   const W = hasNotes ? { p: "42%", a: "18%", n: "40%" } : { p: "70%", a: "30%", n: "0%" };
@@ -190,7 +190,11 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
                   return (
                     <View key={m}>
                       <View style={s.group}>
-                        <Text style={s.groupText}>{SUB_LABEL[m]}</Text>
+                        <Text style={[s.groupText, s.groupFirst, { width: W.p }]}>{SUB_LABEL[m][0]}</Text>
+                        {/* Dozların hemen üstünde: miktar sütunundan başlar, açıklama sütununa taşabilir */}
+                        <Text style={[s.groupText, { width: hasNotes ? "58%" : W.a, paddingHorizontal: 10, textAlign: alignAmt }]}>
+                          {SUB_LABEL[m][1]}
+                        </Text>
                       </View>
                       {list.map((it, i) => (
                         <View key={i} style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }]}>
