@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { METHODS, SLOTS, betweenWeeks, isBetween, computeTotals, doseWater, formatAmount, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
+import { METHODS, SLOTS, betweenWeeks, isBetween, computeTotals, doseWater, formatAmount, totalsBasis, type Recipe } from "@/lib/recipe";
 import { formatPacks, packCounts } from "@/lib/catalog";
 
 // Türkçe karakterler için gömülü yazı tipi
@@ -104,16 +104,12 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   const basis = totalsBasis(recipe.area_donum, recipe.water_per_donum, recipe.barrel_liters, foliar);
   const doseL = doseWater(recipe.water_per_donum, recipe.barrel_liters);
   const totals = computeTotals(recipe.items, basis.factor);
-  const water = waterOrDefault(recipe.water_per_donum);
   const kindText =
     foliar && irrigation ? "SULAMA + YAPRAKTAN" : foliar ? "YAPRAKTAN UYGULAMA" : "SULAMA İLE UYGULAMA";
   // Sulama miktarları dönüme, yapraktan miktarları varile (girilmediyse dönüme suya) göre
   const SUB_LABEL = {
     sulama: "SULAMA İLE  ·  DÖNÜME",
-    yapraktan:
-      doseL !== water
-        ? `YAPRAKTAN  ·  ${formatAmount(doseL)} LİTRE SUYA  ·  DÖNÜME ${formatAmount(water)} L SU`
-        : `YAPRAKTAN  ·  ${formatAmount(water)} LİTRE SUYA`,
+    yapraktan: `YAPRAKTAN  ·  ${formatAmount(doseL)} LİTRE SUYA`,
   } as const;
   // Sütunlar: Ürün | Dönüme | (Açıklama)
   const W = hasNotes ? { p: "42%", a: "18%", n: "40%" } : { p: "70%", a: "30%", n: "0%" };
