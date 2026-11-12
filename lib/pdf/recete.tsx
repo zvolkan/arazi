@@ -35,7 +35,7 @@ const HEADER_H = 64;
 
 const s = StyleSheet.create({
   // Başlık her sayfada tekrarlanır; içerik başlığın altından başlar
-  page: { fontFamily: "Inter", fontSize: 11, color: C.text, paddingTop: HEADER_H + 12, paddingBottom: 44 },
+  page: { fontFamily: "Inter", fontSize: 11, color: C.text, paddingTop: HEADER_H + 10, paddingBottom: 40 },
   band: {
     position: "absolute",
     top: 0,
@@ -51,7 +51,7 @@ const s = StyleSheet.create({
   engineer: { color: "#fff", fontSize: 17, fontWeight: 700, textAlign: "right" },
   sub: { color: "#dfeadc", fontSize: 10, textAlign: "right", marginTop: 4 },
   body: { paddingHorizontal: 34 },
-  info: { flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: C.line, borderRadius: 4, marginBottom: 10 },
+  info: { flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: C.line, borderRadius: 4, marginBottom: 8 },
   cell: { width: "50%", paddingVertical: 4.5, paddingHorizontal: 10 },
   label: { fontSize: 8.5, color: C.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 },
   value: { fontSize: 12, fontWeight: 600 },
@@ -67,17 +67,17 @@ const s = StyleSheet.create({
     borderRadius: 3,
     marginBottom: 10,
   },
-  week: { marginBottom: 8 },
+  week: { marginBottom: 6 },
   th: { flexDirection: "row", backgroundColor: C.green, borderTopLeftRadius: 3, borderTopRightRadius: 3 },
   thText: { color: "#fff", fontWeight: 700, fontSize: 9.5, paddingVertical: 4, paddingHorizontal: 10 },
   tr: { flexDirection: "row", borderBottomWidth: 1, borderColor: C.line },
-  td: { paddingVertical: 3.5, paddingHorizontal: 10, fontSize: 11 },
+  td: { paddingVertical: 2.8, paddingHorizontal: 10, fontSize: 11 },
   group: {
     flexDirection: "row",
     backgroundColor: C.greenSoft,
     borderBottomWidth: 1,
     borderColor: C.line,
-    paddingVertical: 2.5,
+    paddingVertical: 2,
     paddingHorizontal: 10,
   },
   groupText: { fontSize: 8.5, fontWeight: 700, color: C.green, letterSpacing: 0.6 },
@@ -189,8 +189,9 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
           ) : null}
 
           {totals.length > 0 && (
-            <View style={{ marginTop: 10, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }} wrap={false}>
-              <View style={[s.th, { borderRadius: 0 }]}>
+            // Toplam tablosu sayfaya sığmazsa kalan satırlar sonraki sayfaya geçer (başlık en az 3 satırla birlikte kalır)
+            <View style={{ marginTop: 8, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }}>
+              <View style={[s.th, { borderRadius: 0 }]} minPresenceAhead={70}>
                 <Text style={[s.thText, { width: "46%" }]}>
                   TOPLAM  ·  3 HAFTA  ·  {basis.areaLabel.toLocaleUpperCase("tr-TR")}
                 </Text>
@@ -202,6 +203,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
                 return (
                   <View
                     key={i}
+                    wrap={false}
                     style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }, i === totals.length - 1 ? { borderBottomWidth: 0 } : {}]}
                   >
                     <Text style={[s.td, { width: "46%", fontWeight: 600 }]}>{t.product}</Text>
