@@ -110,7 +110,9 @@ export default async function RecipePage({
                 if (list.length === 0) return null;
                 return (
                   <div key={m}>
-                    <div className="rx-sub">{m === "sulama" ? "💧" : "🍃"} {METHOD_LABEL[m]}</div>
+                    <div className="rx-sub">{m === "sulama" ? "💧" : "🍃"} {METHOD_LABEL[m]}
+                      {m === "yapraktan" && <> · {formatAmount(water)} litre suya</>}
+                    </div>
                     <ul className="totals-list">
                       {list.map((it, i) => (
                         <li key={i}>

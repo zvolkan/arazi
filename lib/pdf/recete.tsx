@@ -104,7 +104,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   const water = waterOrDefault(recipe.water_per_donum);
   const kindText =
     foliar && irrigation ? "SULAMA + YAPRAKTAN" : foliar ? "YAPRAKTAN UYGULAMA" : "SULAMA İLE UYGULAMA";
-  const SUB_LABEL = { sulama: "SULAMA İLE", yapraktan: "YAPRAKTAN" } as const;
+  const SUB_LABEL = { sulama: "SULAMA İLE", yapraktan: `YAPRAKTAN  ·  ${formatAmount(water)} LİTRE SUYA` } as const;
   // Sütunlar: Ürün | Dönüme | (Açıklama)
   const W = hasNotes ? { p: "42%", a: "18%", n: "40%" } : { p: "70%", a: "30%", n: "0%" };
   const alignAmt = hasNotes ? "left" : "right";
@@ -142,10 +142,7 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
             </View>
           </View>
 
-          <Text style={s.method}>
-            {kindText}
-            {foliar ? `  ·  YAPRAKTAN: DÖNÜME ${formatAmount(water)} L SU` : ""}
-          </Text>
+          <Text style={s.method}>{kindText}</Text>
 
           {WEEKS.map((w) => {
             const items = recipe.items.filter((it) => it.week === w);
