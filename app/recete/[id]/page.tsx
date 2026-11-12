@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getField, getRecipe } from "@/lib/db";
 import { formatDate } from "@/lib/format";
-import { KIND_LABEL, METHODS, METHOD_LABEL, WEEKS, computeTotals, formatAmount, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
+import { KIND_LABEL, METHODS, METHOD_LABEL, SLOTS, betweenWeeks, isBetween, computeTotals, formatAmount, recipeNo, totalsBasis, waterOrDefault } from "@/lib/recipe";
 import { formatPacks, packCounts } from "@/lib/catalog";
 import { deleteRecipe } from "@/app/actions";
 import { SharePdfButton } from "@/components/SharePdfButton";
@@ -97,11 +97,16 @@ export default async function RecipePage({
         </ul>
       </div>
 
-      {WEEKS.map((w) => {
+      {SLOTS.map((w) => {
         const items = recipe.items.filter((it) => it.week === w);
+        const between = isBetween(w);
+        if (between && items.length === 0) return null;
+        const [a, b] = betweenWeeks(w);
         return (
-          <div className="panel" key={w}>
-            <h2>{w}. Hafta <span className="basis-tag">(dönüme)</span></h2>
+          <div className={`panel${between ? " panel-between" : ""}`} key={w}>
+            <h2>
+              {between ? <>Ara sulama <span className="basis-tag">({a}–{b}. hafta arası · dönüme)</span></> : <>{w}. Hafta <span className="basis-tag">(dönüme)</span></>}
+            </h2>
             {items.length === 0 ? (
               <p style={{ color: "var(--muted)", margin: 0 }}>Bu hafta için ürün yok.</p>
             ) : (

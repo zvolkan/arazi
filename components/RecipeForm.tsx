@@ -8,7 +8,9 @@ import {
   METHODS,
   METHOD_LABEL,
   UNITS,
-  WEEKS,
+  SLOTS,
+  betweenWeeks,
+  isBetween,
   computeTotals,
   recipeKind,
   totalsBasis,
@@ -36,10 +38,11 @@ const emptyRow = (unit: Unit = "L"): Row => ({ key: nextKey++, product: "", amou
 const numStr = (n: number | null | undefined) =>
   n != null ? n.toLocaleString("tr-TR", { useGrouping: false, maximumFractionDigits: 2 }) : "";
 
-/** Kayıtlı ürün satırlarından form haftalarını kurar */
+/** Kayıtlı ürün satırlarından form bölümlerini kurar (SLOTS sırasıyla: hafta ve ara sulamalar) */
 function weeksFrom(items: RecipeItem[] | undefined): Week[] {
-  return WEEKS.map((w) => {
-    if (!items) return { sulama: [emptyRow()], yapraktan: [] };
+  return SLOTS.map((w) => {
+    // Ara sulama kapalı başlar (satırı yoksa kapalı sayılır)
+    if (!items) return isBetween(w) ? { sulama: [], yapraktan: [] } : { sulama: [emptyRow()], yapraktan: [] };
     const pick = (m: Method) =>
       items
         .filter((it) => it.week === w && it.method === m)
@@ -111,7 +114,10 @@ export function RecipeForm(props: Props) {
       setWater(d.data.water ?? "");
       setNote(d.data.note ?? "");
       setName(d.data.name ?? "");
-      setWeeks(d.data.weeks.map((wk) => ({
+      let ws = d.data.weeks;
+      // Ara sulama öncesi kaydedilmiş taslak (3 hafta): araları boş ekle
+      if (ws.length === 3) ws = [ws[0], { sulama: [], yapraktan: [] }, ws[1], { sulama: [], yapraktan: [] }, ws[2]];
+      setWeeks(ws.map((wk) => ({
         sulama: wk.sulama.map((r) => ({ ...r, key: nextKey++ })),
         yapraktan: wk.yapraktan.map((r) => ({ ...r, key: nextKey++ })),
       })));
@@ -134,17 +140,28 @@ export function RecipeForm(props: Props) {
   const addRow = (w: number, m: Method) =>
     update(w, m, (rows) => [...rows, emptyRow(rows.at(-1)?.unit ?? (m === "yapraktan" ? "ml" : "L"))]);
   const removeRow = (w: number, m: Method, key: number) => update(w, m, (rows) => rows.filter((r) => r.key !== key));
+  /** Önceki haftayı (ara sulamayı atlayarak) bu haftaya kopyalar */
+  const prevWeekIndex = (w: number) => (SLOTS as readonly number[]).indexOf(SLOTS[w] - 1);
   const copyPrev = (w: number) =>
-    setWeeks((ws) =>
-      ws.map((wk, i) =>
+    setWeeks((ws) => {
+      const src = ws[prevWeekIndex(w)];
+      return ws.map((wk, i) =>
         i === w
           ? {
-              sulama: ws[w - 1].sulama.map((r) => ({ ...r, key: nextKey++ })),
-              yapraktan: ws[w - 1].yapraktan.map((r) => ({ ...r, key: nextKey++ })),
+              sulama: src.sulama.map((r) => ({ ...r, key: nextKey++ })),
+              yapraktan: src.yapraktan.map((r) => ({ ...r, key: nextKey++ })),
             }
           : wk
-      )
-    );
+      );
+    });
+  const isOpen = (wk: Week) => wk.sulama.length + wk.yapraktan.length > 0;
+  const openBetween = (w: number) => update(w, "sulama", () => [emptyRow()]);
+  const closeBetween = (w: number) => {
+    const wk = weeks[w];
+    const filled = [...wk.sulama, ...wk.yapraktan].some((r) => r.product.trim());
+    if (filled && !confirm("Ara sulamadaki ürünler silinsin mi?")) return;
+    setWeeks((ws) => ws.map((x, i) => (i === w ? { sulama: [], yapraktan: [] } : x)));
+  };
 
   const items = useMemo(
     () =>
@@ -153,7 +170,7 @@ export function RecipeForm(props: Props) {
           wk[m]
             .filter((r) => r.product.trim())
             .map((r) => ({
-              week: i + 1,
+              week: SLOTS[i],
               method: m,
               product: r.product,
               amount: parseAmount(r.amount),
@@ -300,14 +317,38 @@ export function RecipeForm(props: Props) {
         </p>
       </div>
 
-      {weeks.map((wk, w) => (
-        <div className="panel" key={w}>
+      {weeks.map((wk, w) => {
+        const slot = SLOTS[w];
+        const between = isBetween(slot);
+        const [a, b] = betweenWeeks(slot);
+        if (between && !isOpen(wk)) {
+          return (
+            <button type="button" key={w} className="btn btn-block between-add" onClick={() => openBetween(w)}>
+              + Ara sulama ekle <span>({a}–{b}. hafta arası, isteğe bağlı)</span>
+            </button>
+          );
+        }
+        return (
+        <div className={`panel${between ? " panel-between" : ""}`} key={w}>
           <div className="week-head">
-            <h2>{w + 1}. Hafta</h2>
-            {w > 0 && (
-              <button type="button" className="btn btn-sm" onClick={() => copyPrev(w)}>
-                ⧉ {w}. haftayı kopyala
-              </button>
+            {between ? (
+              <>
+                <h2>
+                  Ara sulama <span className="basis-tag">({a}–{b}. hafta arası)</span>
+                </h2>
+                <button type="button" className="btn btn-sm" onClick={() => closeBetween(w)}>
+                  Kaldır
+                </button>
+              </>
+            ) : (
+              <>
+                <h2>{slot}. Hafta</h2>
+                {slot > 1 && (
+                  <button type="button" className="btn btn-sm" onClick={() => copyPrev(w)}>
+                    ⧉ {slot - 1}. haftayı kopyala
+                  </button>
+                )}
+              </>
             )}
           </div>
 
@@ -360,7 +401,8 @@ export function RecipeForm(props: Props) {
             </div>
           ))}
         </div>
-      ))}
+        );
+      })}
 
       <div className="panel">
         <label className="field" style={{ marginBottom: 0 }}>

@@ -469,3 +469,14 @@ a.phone:hover { text-decoration: underline; }
   padding: 10px 16px calc(env(safe-area-inset-bottom) + 10px); text-align: center;
 }
 .is-offline .container { padding-bottom: calc(env(safe-area-inset-bottom) + 96px); }
+
+/* Ara sulama (haftalar arası, isteğe bağlı) */
+.between-add {
+  border: 1.5px dashed var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  margin: -4px 0 14px;
+}
+.between-add span { font-weight: 400; font-size: 13px; }
+.panel-between { border-left: 4px solid #6b9fbf; }

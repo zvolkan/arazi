@@ -29,6 +29,26 @@ export type Unit = (typeof UNITS)[number];
 
 export const WEEKS = [1, 2, 3] as const;
 
+/**
+ * Reçete bölümleri sırasıyla: 1. hafta, (1-2 arası ara sulama), 2. hafta, (2-3 arası ara sulama), 3. hafta.
+ * Ara sulamalar isteğe bağlıdır; veritabanında hafta numarası 12 ve 23 olarak saklanır.
+ */
+export const SLOTS = [1, 12, 2, 23, 3] as const;
+export const isBetween = (slot: number) => slot > 3;
+/** Ara sulamanın arasında olduğu haftalar: 12 → [1, 2] */
+export const betweenWeeks = (slot: number) => [Math.floor(slot / 10), slot % 10] as const;
+/** "2. Hafta" / "Ara sulama (1–2. hafta arası)" */
+export function slotLabel(slot: number) {
+  if (!isBetween(slot)) return `${slot}. Hafta`;
+  const [a, b] = betweenWeeks(slot);
+  return `Ara sulama (${a}–${b}. hafta arası)`;
+}
+/** Sıralama için bölüm sırası */
+export const slotOrder = (slot: number) => {
+  const i = (SLOTS as readonly number[]).indexOf(slot);
+  return i < 0 ? 99 : i;
+};
+
 export type RecipeItem = {
   week: number;
   /** Bu ürün sulamayla mı yapraktan mı verilecek */

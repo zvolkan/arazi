@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { METHODS, WEEKS, computeTotals, formatAmount, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
+import { METHODS, SLOTS, betweenWeeks, isBetween, computeTotals, formatAmount, totalsBasis, waterOrDefault, type Recipe } from "@/lib/recipe";
 import { formatPacks, packCounts } from "@/lib/catalog";
 
 // Türkçe karakterler için gömülü yazı tipi
@@ -25,6 +25,8 @@ export const PDF_BRAND = {
 const C = {
   green: "#2f6b3a",
   greenSoft: "#e9f1e7",
+  /** Ara sulama başlığı */
+  between: "#4f7f9c",
   text: "#1f2a22",
   muted: "#6b746e",
   line: "#d9dcd5",
@@ -108,6 +110,24 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
   // Sütunlar: Ürün | Dönüme | (Açıklama)
   const W = hasNotes ? { p: "42%", a: "18%", n: "40%" } : { p: "70%", a: "30%", n: "0%" };
   const alignAmt = hasNotes ? "left" : "right";
+  const totalRow = (t: (typeof totals)[number], i: number) => {
+    const packs = packCounts(t.product, t.amount, t.unit);
+    return (
+      <View
+        key={i}
+        wrap={false}
+        style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }, i === totals.length - 1 ? { borderBottomWidth: 0 } : {}]}
+      >
+        <Text style={[s.td, { width: "46%", fontWeight: 600 }]}>{t.product}</Text>
+        <Text style={[s.td, { width: "20%", textAlign: "right", fontWeight: 700 }]}>
+          {formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}
+        </Text>
+        <Text style={[s.td, { width: "34%", textAlign: "right", fontSize: 10 }]}>
+          {packs.length ? formatPacks(packs) : "—"}
+        </Text>
+      </View>
+    );
+  };
   return (
     <Document title={`Reçete ${d.no}`} author={PDF_BRAND.engineer}>
       <Page size="A4" style={s.page}>
@@ -144,13 +164,17 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
 
           <Text style={s.method}>{kindText}</Text>
 
-          {WEEKS.map((w) => {
+          {SLOTS.map((w) => {
             const items = recipe.items.filter((it) => it.week === w);
             if (items.length === 0) return null;
+            const between = isBetween(w);
+            const [a, b] = betweenWeeks(w);
             return (
               <View key={w} style={s.week} wrap={false}>
-                <View style={s.th}>
-                  <Text style={[s.thText, { width: W.p }]}>{w}. HAFTA</Text>
+                <View style={[s.th, between ? { backgroundColor: C.between } : {}]}>
+                  <Text style={[s.thText, { width: W.p }]}>
+                    {between ? `ARA SULAMA  ·  ${a}.–${b}. HAFTA ARASI` : `${w}. HAFTA`}
+                  </Text>
                   <Text style={[s.thText, { width: W.a, textAlign: alignAmt }]}>DÖNÜME</Text>
                   {hasNotes && <Text style={[s.thText, { width: W.n }]}>AÇIKLAMA</Text>}
                 </View>
@@ -186,33 +210,20 @@ export function RecetePdf({ d }: { d: RecetePdfData }) {
           ) : null}
 
           {totals.length > 0 && (
-            // Toplam tablosu sayfaya sığmazsa kalan satırlar sonraki sayfaya geçer (başlık en az 3 satırla birlikte kalır)
+            // Toplam tablosu sayfaya sığmazsa kalan satırlar sonraki sayfaya geçer;
+            // başlık tek başına sayfa sonunda kalmasın diye ilk 3 satırla birlikte tutulur
             <View style={{ marginTop: 8, borderWidth: 1.5, borderColor: C.green, borderRadius: 4 }}>
-              <View style={[s.th, { borderRadius: 0 }]} minPresenceAhead={70}>
-                <Text style={[s.thText, { width: "46%" }]}>
-                  TOPLAM{basis.warning ? "  ·  1 DÖNÜM İÇİN" : ""}
-                </Text>
-                <Text style={[s.thText, { width: "20%", textAlign: "right" }]}>MİKTAR</Text>
-                <Text style={[s.thText, { width: "34%", textAlign: "right" }]}>PAKET</Text>
+              <View wrap={false}>
+                <View style={[s.th, { borderRadius: 0 }]}>
+                  <Text style={[s.thText, { width: "46%" }]}>
+                    TOPLAM{basis.warning ? "  ·  1 DÖNÜM İÇİN" : ""}
+                  </Text>
+                  <Text style={[s.thText, { width: "20%", textAlign: "right" }]}>MİKTAR</Text>
+                  <Text style={[s.thText, { width: "34%", textAlign: "right" }]}>PAKET</Text>
+                </View>
+                {totals.slice(0, 3).map((t, i) => totalRow(t, i))}
               </View>
-              {totals.map((t, i) => {
-                const packs = packCounts(t.product, t.amount, t.unit);
-                return (
-                  <View
-                    key={i}
-                    wrap={false}
-                    style={[s.tr, { backgroundColor: i % 2 ? C.zebra : "#fff" }, i === totals.length - 1 ? { borderBottomWidth: 0 } : {}]}
-                  >
-                    <Text style={[s.td, { width: "46%", fontWeight: 600 }]}>{t.product}</Text>
-                    <Text style={[s.td, { width: "20%", textAlign: "right", fontWeight: 700 }]}>
-                      {formatAmount(t.amount)} {t.unit === "L" ? "Litre" : "kg"}
-                    </Text>
-                    <Text style={[s.td, { width: "34%", textAlign: "right", fontSize: 10 }]}>
-                      {packs.length ? formatPacks(packs) : "—"}
-                    </Text>
-                  </View>
-                );
-              })}
+              {totals.slice(3).map((t, i) => totalRow(t, i + 3))}
             </View>
           )}
 

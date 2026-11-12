@@ -1,7 +1,10 @@
 import ExcelJS from "exceljs";
 import { purgeTrash, sql } from "./db";
 import { formatDate, formatPhone } from "./format";
-import { METHOD_LABEL, recipeNo, type Method } from "./recipe";
+import { METHOD_LABEL, isBetween, recipeNo, slotOrder, type Method } from "./recipe";
+
+/** Excel'de hafta sütunu: 1, 2, 3 veya "1-2 arası" (ara sulama) */
+const weekCell = (w: number) => (isBetween(w) ? `${Math.floor(w / 10)}-${w % 10} arası` : w);
 
 /** Kaç günlük otomatik yedek saklanır */
 export const BACKUP_KEEP = 30;
@@ -189,7 +192,7 @@ export async function backupWorkbook(data: BackupData, takenAt: Date | string): 
     { header: "Genel Açıklama", key: "rnote", width: 36 },
   ]);
   const sortedItems = [...items].sort(
-    (a, b) => b.recipe_id - a.recipe_id || a.week - b.week || a.position - b.position
+    (a, b) => b.recipe_id - a.recipe_id || slotOrder(a.week) - slotOrder(b.week) || a.position - b.position
   );
   for (const it of sortedItems) {
     const r = recipeById.get(it.recipe_id)!;
@@ -202,7 +205,7 @@ export async function backupWorkbook(data: BackupData, takenAt: Date | string): 
       method: METHOD_LABEL[(it.method ?? r.method) as Method] ?? it.method ?? r.method,
       area: r.area_donum ?? "",
       water: r.water_per_donum ?? "",
-      week: it.week,
+      week: weekCell(it.week),
       product: it.product,
       amount: Number(it.amount),
       unit: it.unit,
@@ -226,13 +229,13 @@ export async function backupWorkbook(data: BackupData, takenAt: Date | string): 
     const tItems = [...(data.recipe_template_items ?? [])].sort(
       (a, b) =>
         String(tpls.get(a.template_id)?.name ?? "").localeCompare(String(tpls.get(b.template_id)?.name ?? ""), "tr") ||
-        a.week - b.week ||
+        slotOrder(a.week) - slotOrder(b.week) ||
         a.position - b.position
     );
     for (const it of tItems) {
       wsT.addRow({
         name: tpls.get(it.template_id)?.name,
-        week: it.week,
+        week: weekCell(it.week),
         method: METHOD_LABEL[it.method as Method] ?? it.method,
         product: it.product,
         amount: Number(it.amount),

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { productOptions, sql } from "@/lib/db";
 import { normalizeCrop, normalizeName, phoneKey, todayISO } from "@/lib/format";
-import { UNITS, recipeKind, waterOrDefault, type RecipeItem, type RecipeKind } from "@/lib/recipe";
+import { SLOTS, UNITS, recipeKind, waterOrDefault, type RecipeItem, type RecipeKind } from "@/lib/recipe";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -173,7 +173,7 @@ function cleanItems(raw: unknown): RecipeItem[] | string {
     }))
     .filter((it) => it.product);
   for (const it of items) {
-    if (![1, 2, 3].includes(it.week)) return "Geçersiz hafta.";
+    if (!(SLOTS as readonly number[]).includes(it.week)) return "Geçersiz hafta.";
     if (it.method !== "sulama" && it.method !== "yapraktan") return "Geçersiz uygulama şekli.";
     if (!(it.amount > 0)) return `"${it.product}" için miktar girin.`;
     if (!UNITS.includes(it.unit as (typeof UNITS)[number])) return "Geçersiz birim.";

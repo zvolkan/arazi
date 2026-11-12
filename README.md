@@ -17,6 +17,8 @@ Next.js 16 + PostgreSQL (Neon). Telefonda kart, bilgisayarda tablo görünümü.
 - Telefona dokununca arama açılır
 - **Reçete:** sulama ve yapraktan aynı reçetede — her haftada 💧 Sulama ve 🍃 Yapraktan bölümleri,
   her satırda ürün + miktar (dönüme) + birim + açıklama.
+  Haftaların arasına isteğe bağlı **ara sulama** eklenebilir (1–2 ve 2–3. hafta arası; içinde sulama ve yapraktan seçilir,
+  toplamlara dahildir, PDF'te mavi başlıkla görünür).
   Tarlanın **dönüm** bilgisi kayıtlıdır; toplamlar dönümle çarpılır (aynı ürün iki bölümde varsa toplamda birleşir).
   - Sulama: toplam = dönüme miktar × dönüm (örn. Cloud 2+2+3 L × 4 dönüm = 28 Litre)
   - Yapraktan: miktar yine **dönüme** girilir; mühendis dönüme kaç litre su verileceğini yazar (boşsa 150 L).
