@@ -383,7 +383,7 @@ a.phone:hover { text-decoration: underline; }
 }
 .rx-block .rx-row input, .rx-block .rx-row select, .rx-block .rx-del { background: #fff; }
 .rx-add { background: transparent; }
-.rx-sub { font-size: 14px; font-weight: 700; color: var(--muted); margin: 6px 0 2px; }
+.rx-sub { font-size: 16px; font-weight: 700; color: var(--accent); margin: 12px 0 4px; padding-bottom: 4px; border-bottom: 1.5px solid var(--line); }
 
 /* Kart ve tablo satırı tıklanabilir */
 .card-link, .row-link { cursor: pointer; }

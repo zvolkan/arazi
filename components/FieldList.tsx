@@ -127,9 +127,12 @@ export function FieldList({ fields, today }: { fields: FieldRow[]; today: string
       {total === 0 ? (
         <div className="empty">Aramaya uyan kayıt yok.</div>
       ) : (
-        SECTIONS.map((s) => (
-          <Section key={s.status} title={s.title} alert={s.alert} rows={groups[s.status]} today={today} />
-        ))
+        SECTIONS
+          // Ararken/süzerken boş bölümler gizlenir; sonuç hangi bölümde olursa olsun en üstte görünür
+          .filter((s) => !(q.trim() || crop || region) || groups[s.status].length > 0)
+          .map((s) => (
+            <Section key={s.status} title={s.title} alert={s.alert} rows={groups[s.status]} today={today} />
+          ))
       )}
     </>
   );

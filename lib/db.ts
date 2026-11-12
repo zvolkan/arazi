@@ -356,17 +356,21 @@ export async function getTemplate(id: number): Promise<RecipeTemplate | null> {
 }
 
 /** Son yazılan reçeteler (tüm tarlalar) */
+export type RecipeListRow = {
+  id: number;
+  recipe_date: string;
+  method: Recipe["method"];
+  field_id: number;
+  full_name: string;
+  phone: string;
+  crop: string;
+  item_count: number;
+};
+
+/** Reçeteler bölümü: en yeniden eskiye (arama sayfada isim/telefonla yapılır) */
 export async function listRecentRecipes(limit = 30) {
-  return sql<{
-    id: number;
-    recipe_date: string;
-    method: Recipe["method"];
-    field_id: number;
-    full_name: string;
-    crop: string;
-    item_count: number;
-  }>(
-    `SELECT r.id, r.recipe_date, r.method, f.id AS field_id, fa.full_name, f.crop,
+  return sql<RecipeListRow>(
+    `SELECT r.id, r.recipe_date, r.method, f.id AS field_id, fa.full_name, fa.phone, f.crop,
             (SELECT COUNT(*)::int FROM recipe_items i WHERE i.recipe_id = r.id) AS item_count
        FROM recipes r JOIN fields f ON f.id = r.field_id JOIN farmers fa ON fa.id = f.farmer_id
       WHERE r.deleted_at IS NULL AND f.deleted_at IS NULL

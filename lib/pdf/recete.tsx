@@ -73,16 +73,18 @@ const s = StyleSheet.create({
   th: { flexDirection: "row", backgroundColor: C.green, borderTopLeftRadius: 3, borderTopRightRadius: 3 },
   thText: { color: "#fff", fontWeight: 700, fontSize: 9.5, paddingVertical: 4, paddingHorizontal: 10 },
   tr: { flexDirection: "row", borderBottomWidth: 1, borderColor: C.line },
-  td: { paddingVertical: 2.8, paddingHorizontal: 10, fontSize: 11 },
+  td: { paddingVertical: 2.4, paddingHorizontal: 10, fontSize: 11 },
   group: {
     flexDirection: "row",
     backgroundColor: C.greenSoft,
     borderBottomWidth: 1,
     borderColor: C.line,
-    paddingVertical: 2,
-    paddingHorizontal: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: C.green,
+    paddingVertical: 2.5,
+    paddingHorizontal: 8,
   },
-  groupText: { fontSize: 8.5, fontWeight: 700, color: C.green, letterSpacing: 0.6 },
+  groupText: { fontSize: 10, fontWeight: 700, color: C.green, letterSpacing: 0.4 },
   footer: { position: "absolute", bottom: 18, left: 34, right: 34, textAlign: "center", fontSize: 9, color: C.muted },
 });
 
